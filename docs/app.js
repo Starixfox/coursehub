@@ -804,6 +804,7 @@ async function openLessonEditor(lessonId) {
     <div class="field" style="margin:0"><label>Lesson content</label><textarea class="input" id="l-html" rows="5">${esc(content?.content_html || "")}</textarea></div>
     <div class="row"><button class="btn btn-primary" id="l-save">Save lesson</button><button class="btn btn-danger" id="l-del">Delete</button></div>
   </div>`;
+  wireLabels();
   ed.scrollIntoView({ behavior: "smooth" });
   document.getElementById("l-save").onclick = async () => {
     const hasVid = document.getElementById("l-vid").checked;
@@ -928,6 +929,19 @@ function observeReveals() {
   document.querySelectorAll(".reveal:not(.in)").forEach((el) => _io.observe(el));
 }
 
+// Accessibility: programmatically associate every .field label with its control.
+let _lblN = 0;
+function wireLabels() {
+  document.querySelectorAll(".field").forEach((fld) => {
+    const lab = fld.querySelector("label");
+    const ctl = fld.querySelector("input, select, textarea");
+    if (lab && ctl) {
+      if (!ctl.id) ctl.id = "ctl-" + ++_lblN;
+      if (!lab.htmlFor) lab.htmlFor = ctl.id;
+    }
+  });
+}
+
 // Serialize navigation so a slow async view can never clobber a newer one.
 let _navChain = Promise.resolve();
 function router() {
@@ -945,7 +959,7 @@ async function renderRoute() {
       try { await view(match); }
       catch (e) { if (!stale()) app.innerHTML = `<div class="container section"><div class="alert danger">${esc(e.message || "Something went wrong.")}</div></div>`; }
       if (stale()) return; // a newer navigation superseded this render
-      renderNav(); observeReveals(); return;
+      renderNav(); observeReveals(); wireLabels(); return;
     }
   }
   if (stale()) return;

@@ -7,7 +7,7 @@ const app = document.getElementById("app");
 const navEl = document.getElementById("nav");
 const SAMPLE_HLS =
   "https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8";
-const ASIDE_IMG = "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=70";
+const ASIDE_IMG = "https://ddkujivsfnqvnhubzjjy.supabase.co/storage/v1/object/public/course-images/_aside.jpg";
 
 const TIER_RANK = { free: 0, basic: 1, pro: 2, premium: 3 };
 const TIERS = [
@@ -379,25 +379,68 @@ async function viewCourse(m) {
     </div>`;
 }
 
+// Resume router: /learn/:slug -> jump to the next incomplete (accessible) lesson.
+async function viewLearn(m) {
+  const slug = decodeURIComponent(m[1].split("?")[0]);
+  const course = await getCourse(slug);
+  if (!course) { go("#/catalog"); return; }
+  const lessons = (await getCurriculum(course.id)).flatMap((x) => x.lessons);
+  const hasAccess = TIER_RANK[tier] >= TIER_RANK[course.required_tier];
+  const accessible = lessons.filter((l) => l.is_preview || hasAccess);
+  if (!accessible.length) { go("#/course/" + slug); return; }
+  let target = accessible[0];
+  if (session) {
+    const { data: prog } = await supabase.from("lesson_progress").select("lesson_id, completed").eq("course_id", course.id).eq("user_id", session.user.id);
+    const done = new Set((prog || []).filter((p) => p.completed).map((p) => p.lesson_id));
+    target = accessible.find((l) => !done.has(l.id)) || accessible[accessible.length - 1];
+  }
+  go("#/lesson/" + target.id);
+}
+
 async function viewLesson(m) {
   const lessonId = decodeURIComponent(m[1]);
   const { data: lesson } = await supabase.from("lessons").select("*").eq("id", lessonId).maybeSingle();
   if (!lesson) { app.innerHTML = `<div class="container section"><h2>Lesson not found</h2></div>`; return; }
   const course = await getCourse((await supabase.from("courses").select("slug").eq("id", lesson.course_id).maybeSingle()).data?.slug || "");
   const modules = course ? await getCurriculum(course.id) : [];
+  const flat = modules.flatMap((mod) => mod.lessons);
+  const idx = flat.findIndex((l) => l.id === lessonId);
+  const next = idx >= 0 && idx < flat.length - 1 ? flat[idx + 1] : null;
+  const prev = idx > 0 ? flat[idx - 1] : null;
   // THE GATE: lesson_content is returned by RLS only if preview / owned / entitled.
   const { data: content } = await supabase.from("lesson_content").select("content_html, cf_stream_uid").eq("lesson_id", lessonId).maybeSingle();
   const unlocked = !!content;
-  const side = modules.flatMap((mod) => mod.lessons).map((l) => {
+
+  let myProg = null, coursePct = 0, doneSet = new Set();
+  if (session) {
+    const [{ data: pr }, { data: cp }, { data: all }] = await Promise.all([
+      supabase.from("lesson_progress").select("*").eq("user_id", session.user.id).eq("lesson_id", lessonId).maybeSingle(),
+      supabase.rpc("my_course_progress", { p_course_id: lesson.course_id }),
+      supabase.from("lesson_progress").select("lesson_id, completed").eq("user_id", session.user.id).eq("course_id", lesson.course_id),
+    ]);
+    myProg = pr; coursePct = cp?.[0]?.percent ?? 0;
+    doneSet = new Set((all || []).filter((p) => p.completed).map((p) => p.lesson_id));
+    supabase.from("enrollments").upsert({ user_id: session.user.id, course_id: lesson.course_id, last_accessed_at: new Date().toISOString() }, { onConflict: "user_id,course_id" });
+  }
+  const alreadyDone = !!myProg?.completed;
+  const courseDone = coursePct >= 100;
+
+  const side = flat.map((l) => {
     const ok = l.is_preview || TIER_RANK[tier] >= TIER_RANK[course?.required_tier || "basic"];
+    const isDone = doneSet.has(l.id);
+    const mark = isDone ? icon("check", 'width="13" height="13"') : ok ? (l.id === lessonId ? icon("play", 'width="13" height="13"') : "○") : icon("lock", 'width="12" height="12"');
     return `<div class="side-lesson ${l.id === lessonId ? "active" : ""} ${ok ? "" : "locked"}" onclick="location.hash='#/lesson/${l.id}'">
-      <span style="width:16px;display:flex">${ok ? (l.id === lessonId ? icon("play", 'width="14" height="14"') : icon("play", 'width="13" height="13"')) : icon("lock", 'width="13" height="13"')}</span>
+      <span style="width:16px;display:flex;justify-content:center;color:${isDone ? "var(--gold)" : "inherit"}">${mark}</span>
       <span style="flex:1">${esc(l.title)}</span></div>`;
   }).join("");
+
   app.innerHTML = `
     <div class="container learn">
       <aside class="sidebar reveal">
-        <div class="head"><a class="muted" style="font-size:13px" href="#/course/${esc(course?.slug || "")}">← ${esc(course?.title || "Course")}</a></div>
+        <div class="head">
+          <a class="muted" style="font-size:13px" href="#/course/${esc(course?.slug || "")}">← ${esc(course?.title || "Course")}</a>
+          ${session ? `<div style="height:5px;background:var(--surface);border-radius:99px;overflow:hidden;margin-top:12px"><div style="height:100%;width:${coursePct}%;background:var(--gold)"></div></div><div class="muted" style="font-size:12px;margin-top:6px">${coursePct}% complete</div>` : ""}
+        </div>
         <div>${side}</div>
       </aside>
       <div class="reveal">
@@ -405,10 +448,13 @@ async function viewLesson(m) {
         ${unlocked
           ? `<video id="player" class="player" controls playsinline></video>
              <div class="prose" style="margin-top:24px">${content.content_html || ""}</div>
-             <div class="row" style="margin-top:22px">
-               <button class="btn btn-primary" id="complete">${icon("check")} Mark complete</button>
-               <span class="muted" id="complete-msg" style="font-size:14px"></span>
-             </div>`
+             <div class="row" style="margin-top:24px;justify-content:space-between">
+               <div class="row"><button class="btn ${alreadyDone ? "btn-outline" : "btn-primary"}" id="complete">${alreadyDone ? "Completed ✓" : icon("check") + " Mark complete"}</button><span class="muted" id="complete-msg" style="font-size:14px"></span></div>
+               <div class="row">${prev ? `<a class="btn btn-ghost btn-sm" href="#/lesson/${prev.id}">← Previous</a>` : ""}${next ? `<a class="btn btn-outline btn-sm" href="#/lesson/${next.id}">Next lesson →</a>` : ""}</div>
+             </div>
+             ${courseDone ? `<div class="card pad" style="margin-top:24px;border-color:var(--gold-line);background:var(--gold-soft);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+               <div class="row" style="gap:12px"><span style="color:var(--gold);display:flex">${icon("award", 'width="22" height="22"')}</span><div><strong>You finished this course!</strong><div class="muted" style="font-size:13px">${tier === "premium" ? "Claim your certificate of completion." : "Upgrade to Premium to earn a certificate."}</div></div></div>
+               ${tier === "premium" ? `<button class="btn btn-primary btn-sm" id="claim-cert">Claim certificate</button>` : `<a class="btn btn-outline btn-sm" href="#/pricing">Go Premium</a>`}</div>` : ""}`
           : `<div class="locked-box">
                <div class="lk">${icon("lock", 'width="24" height="24"')}</div>
                <h2 style="margin:0;font-size:23px">This lesson is locked</h2>
@@ -417,20 +463,69 @@ async function viewLesson(m) {
              </div>`}
       </div>
     </div>`;
+
   if (unlocked) {
     const v = document.getElementById("player");
     if (window.Hls && window.Hls.isSupported()) { const hls = new window.Hls(); hls.loadSource(SAMPLE_HLS); hls.attachMedia(v); }
     else if (v.canPlayType("application/vnd.apple.mpegurl")) { v.src = SAMPLE_HLS; }
+    const resumeAt = myProg?.last_position_seconds || 0;
+    if (resumeAt > 3) v.addEventListener("loadedmetadata", () => { if (resumeAt < v.duration - 5) v.currentTime = resumeAt; }, { once: true });
+    let lastSave = 0;
+    const savePos = (sec) => { if (!session || !sec) return; supabase.from("lesson_progress").upsert({ user_id: session.user.id, lesson_id: lessonId, course_id: lesson.course_id, last_position_seconds: sec }, { onConflict: "user_id,lesson_id" }); };
+    v.addEventListener("timeupdate", () => { const now = Date.now(); if (now - lastSave > 12000) { lastSave = now; savePos(Math.floor(v.currentTime)); } });
+    v.addEventListener("pause", () => savePos(Math.floor(v.currentTime)));
+    window.addEventListener("pagehide", () => savePos(Math.floor(v.currentTime)), { once: true });
     const btn = document.getElementById("complete");
     if (btn) btn.onclick = async () => {
       if (!session) { go("#/login"); return; }
       btn.disabled = true;
       const { error } = await supabase.from("lesson_progress").upsert(
-        { user_id: session.user.id, lesson_id: lessonId, course_id: lesson.course_id, completed: true, completed_at: new Date().toISOString() },
+        { user_id: session.user.id, lesson_id: lessonId, course_id: lesson.course_id, completed: true, completed_at: new Date().toISOString(), last_position_seconds: Math.floor(v.currentTime || 0) },
         { onConflict: "user_id,lesson_id" });
-      document.getElementById("complete-msg").textContent = error ? "Could not save (are you logged in?)" : "Completed ✓";
+      if (error) { document.getElementById("complete-msg").textContent = "Could not save"; btn.disabled = false; return; }
+      if (next) go("#/lesson/" + next.id); else router();
+    };
+    const cc = document.getElementById("claim-cert");
+    if (cc) cc.onclick = async () => {
+      cc.disabled = true; cc.textContent = "Issuing…";
+      const { error } = await supabase.rpc("claim_certificate", { p_course_id: lesson.course_id });
+      if (error) { cc.disabled = false; cc.textContent = "Claim certificate"; alert(error.message); return; }
+      go("#/certificates");
     };
   }
+}
+
+function certificateCard(cert) {
+  const c = cert.courses || {};
+  const name = profile?.full_name || session?.user?.email || "Learner";
+  const date = new Date(cert.issued_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  return `<div class="cert reveal"><div class="cert-inner">
+    <div class="cert-seal">${icon("award", 'width="30" height="30"')}</div>
+    <div class="cert-eyebrow">Certificate of Completion</div>
+    <p class="cert-pre">This certifies that</p>
+    <div class="cert-name">${esc(name)}</div>
+    <p class="cert-pre">has successfully completed</p>
+    <div class="cert-course">${esc(c.title || "Course")}</div>
+    <div class="cert-foot">
+      <div><div class="cert-foot-l">Issued</div><div>${esc(date)}</div></div>
+      <div><div class="cert-foot-l">Credential ID</div><div>${esc(cert.serial)}</div></div>
+      <div><div class="cert-foot-l">Instructor</div><div>${esc(c.creator_name || "CourseHub")}</div></div>
+    </div>
+  </div></div>`;
+}
+
+async function viewCertificates() {
+  if (!session) { go("#/login"); return; }
+  const { data: certs } = await supabase.from("certificates").select("*, courses(title, slug, image_url, creator_name)").order("issued_at", { ascending: false });
+  const list = certs || [];
+  app.innerHTML = `
+    <section class="container section">
+      <div class="reveal"><span class="eyebrow">Achievements</span><h2 style="font-size:34px;margin:10px 0 6px">Your certificates</h2>
+        <p class="section-sub">Certificates you've earned by completing courses on the Premium plan.</p></div>
+      ${list.length
+        ? `<div style="display:flex;flex-direction:column;gap:24px;max-width:780px;margin-top:8px">${list.map(certificateCard).join("")}</div>`
+        : `<div class="card pad muted reveal" style="max-width:560px;margin-top:8px">You haven't earned a certificate yet. Finish a course on the Premium plan to earn one. <a class="gold" href="#/catalog">Browse courses ${icon("arrow", 'width="14" height="14"')}</a></div>`}
+    </section>`;
 }
 
 function authForm(mode) {
@@ -512,7 +607,8 @@ async function viewDashboard() {
     <section class="container section">
       <div class="reveal"><span class="eyebrow">Your dashboard</span>
         <h2 style="font-size:36px;margin:10px 0 4px">Welcome back${profile?.full_name ? ", " + esc(profile.full_name.split(" ")[0]) : ""}.</h2>
-        <p class="section-sub">You're on the ${tierBadge(tier)} plan.</p></div>
+        <p class="section-sub">You're on the ${tierBadge(tier)} plan.</p>
+        <div class="row" style="margin-top:18px"><a class="btn btn-outline btn-sm" href="#/catalog">Browse catalog</a><a class="btn btn-ghost btn-sm" href="#/certificates">${icon("award", 'width="15" height="15"')} Certificates</a><a class="btn btn-ghost btn-sm" href="#/pricing">Manage plan</a></div></div>
       <h3 style="font-family:var(--serif);font-size:24px;margin:34px 0 18px" class="reveal">Continue learning</h3>
       <div class="grid">${enrolled.map(progressCard).join("") || `<div class="card pad muted reveal">You haven't started a course yet. <a class="gold" href="#/catalog">Browse the catalog ${icon("arrow", 'width="14" height="14"')}</a></div>`}</div>
       <h3 style="font-family:var(--serif);font-size:24px;margin:42px 0 18px" class="reveal">Recommended for you</h3>
@@ -781,11 +877,12 @@ const routes = [
   [/^#\/catalog/, viewCatalog],
   [/^#\/course\/(.+)$/, viewCourse],
   [/^#\/lesson\/(.+)$/, viewLesson],
-  [/^#\/learn\/(.+)$/, viewCourse],
+  [/^#\/learn\/(.+)$/, viewLearn],
   [/^#\/login$/, viewLogin],
   [/^#\/register$/, viewRegister],
   [/^#\/dashboard$/, viewDashboard],
   [/^#\/account$/, viewAccount],
+  [/^#\/certificates$/, viewCertificates],
   [/^#\/pricing$/, viewPricing],
   [/^#\/creator$/, viewCreator],
   [/^#\/creator\/course\/new$/, viewCreatorNew],

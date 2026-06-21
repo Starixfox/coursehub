@@ -375,4 +375,16 @@ footer.foot { border-top: 1px solid var(--border); margin-top: 80px; padding: 56
 .center { display: flex; align-items: center; justify-content: center; padding: 80px 0; }
 .skeleton { background: linear-gradient(100deg, var(--card) 30%, var(--card-2) 50%, var(--card) 70%); background-size: 200% 100%; animation: sk 1.3s infinite; border-radius: var(--radius-sm); }
 @keyframes sk { to { background-position: -200% 0; } }
+/* ---------- certificate ---------- */
+.cert { border-radius: var(--radius-lg); padding: 2px; background: linear-gradient(140deg, var(--gold-line), transparent 38%, var(--gold-line)); }
+.cert-inner { background: var(--card); border-radius: calc(var(--radius-lg) - 2px); padding: 44px 40px; text-align: center; position: relative; overflow: hidden; }
+.cert-inner::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(40rem 20rem at 50% -20%, var(--gold-soft), transparent 60%); }
+.cert-seal { width: 66px; height: 66px; border-radius: 50%; border: 1px solid var(--gold-line); background: var(--gold-soft); color: var(--gold); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; position: relative; }
+.cert-eyebrow { font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); margin-bottom: 22px; }
+.cert-pre { color: var(--muted); font-size: 14px; margin: 8px 0; }
+.cert-name { font-family: var(--serif); font-size: clamp(28px, 4vw, 36px); color: var(--fg); }
+.cert-course { font-family: var(--serif); font-size: 22px; font-style: italic; color: var(--gold-2); margin-top: 4px; }
+.cert-foot { display: flex; justify-content: center; gap: 44px; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 13px; flex-wrap: wrap; position: relative; }
+.cert-foot-l { color: var(--muted-2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .reveal { opacity: 1; transform: none; } }

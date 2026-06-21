@@ -1,4 +1,5 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+import DOMPurify from "https://cdn.jsdelivr.net/npm/dompurify@3/+esm";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -37,6 +38,19 @@ const tierBadge = (t) => {
   return `<span class="badge ${cls}">${esc(t[0].toUpperCase() + t.slice(1))}</span>`;
 };
 const go = (hash) => (location.hash = hash);
+const slugify = (s) => String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+// Creator HTML is untrusted — sanitize before STORING (no server in this path).
+const sanitize = (html) =>
+  DOMPurify.sanitize(html ?? "", {
+    ALLOWED_TAGS: ["h1","h2","h3","h4","p","blockquote","ul","ol","li","b","i","strong","em","u","s","code","pre","a","img","figure","figcaption","hr","br","span","table","thead","tbody","tr","th","td"],
+    ALLOWED_ATTR: ["href","name","target","rel","src","alt","width","height","class"],
+    ALLOWED_URI_REGEXP: /^(https:|mailto:|data:image\/)/i,
+  });
+async function requireRole(roles) {
+  if (!session) { go("#/login"); return false; }
+  if (!roles.includes(profile?.role)) { go("#/dashboard"); return false; }
+  return true;
+}
 
 async function loadSession() {
   const { data } = await supabase.auth.getSession();
@@ -57,7 +71,8 @@ async function loadSession() {
 function renderNav() {
   const right = session
     ? `${tierBadge(tier)}
-       ${profile?.role === "creator" || profile?.role === "admin" ? `<a class="btn btn-ghost btn-sm" href="#/account">Studio</a>` : ""}
+       ${profile?.role === "creator" || profile?.role === "admin" ? `<a class="btn btn-ghost btn-sm" href="#/creator">Studio</a>` : ""}
+       ${profile?.role === "admin" ? `<a class="btn btn-ghost btn-sm" href="#/admin">Admin</a>` : ""}
        <a class="btn btn-ghost btn-sm" href="#/account">Account</a>
        <button class="btn btn-outline btn-sm" id="signout">Sign out</button>`
     : `<a class="btn btn-ghost btn-sm" href="#/login">Log in</a>
@@ -318,9 +333,10 @@ async function viewAccount() {
       <div class="grid" style="grid-template-columns:1fr 1fr;max-width:760px">
         <div class="card pad stack">
           <h3 style="margin:0">Profile</h3>
-          <p class="muted" style="margin:0">${esc(profile?.full_name || "")}</p>
+          <div class="field"><label>Full name</label><input class="input" id="acc-name" value="${esc(profile?.full_name || "")}" /></div>
           <p class="muted" style="margin:0">${esc(session.user.email)}</p>
           <p style="margin:0">Role: <span class="badge">${esc(profile?.role || "subscriber")}</span></p>
+          <div class="row"><button class="btn btn-primary btn-sm" id="acc-save">Save</button><span class="muted" id="acc-msg" style="font-size:13px"></span></div>
         </div>
         <div class="card pad stack">
           <h3 style="margin:0">Subscription</h3>
@@ -330,6 +346,13 @@ async function viewAccount() {
         </div>
       </div>
     </section>`;
+  const saveBtn = document.getElementById("acc-save");
+  if (saveBtn) saveBtn.onclick = async () => {
+    const name = document.getElementById("acc-name").value;
+    const { error } = await supabase.from("profiles").update({ full_name: name }).eq("id", session.user.id);
+    document.getElementById("acc-msg").textContent = error ? error.message : "Saved ✓";
+    if (!error && profile) { profile.full_name = name; renderNav(); }
+  };
 }
 
 function viewPricing() {
@@ -350,6 +373,205 @@ function viewPricing() {
     </section>`;
 }
 
+/* ---------------- creator studio ---------------- */
+async function viewCreator() {
+  if (!(await requireRole(["creator", "admin"]))) return;
+  const { data: courses } = await supabase.from("courses").select("*").eq("creator_id", session.user.id).order("created_at", { ascending: false });
+  app.innerHTML = `
+    <section class="container section">
+      <div class="section-head"><div><h2>Creator studio</h2><p class="section-sub">Create and manage your courses.</p></div>
+        <a class="btn btn-primary" href="#/creator/course/new">+ New course</a></div>
+      <div class="grid">${(courses || []).map((c) => `
+        <div class="card course-card" onclick="location.hash='#/creator/course/${c.id}'">
+          <div class="body">
+            <div class="row">${tierBadge(c.required_tier)}<span class="badge ${c.status === "published" ? "success" : ""}">${esc(c.status)}</span></div>
+            <h3>${esc(c.title)}</h3><p class="muted" style="font-size:13px;margin:0">${esc(c.subtitle || "")}</p>
+          </div></div>`).join("") || `<div class="card pad muted">No courses yet — create your first one.</div>`}</div>
+    </section>`;
+}
+
+async function viewCreatorNew() {
+  if (!(await requireRole(["creator", "admin"]))) return;
+  app.innerHTML = `
+    <section class="container section"><div class="auth-wrap card pad" style="max-width:600px;margin:20px auto">
+      <a class="muted" href="#/creator" style="font-size:13px">← Studio</a>
+      <h2 style="margin:6px 0 14px">New course</h2><div id="msg"></div>
+      <form id="cform">
+        <div class="field"><label>Title</label><input class="input" name="title" required /></div>
+        <div class="field"><label>Subtitle</label><input class="input" name="subtitle" /></div>
+        <div class="field"><label>Description</label><textarea class="input" name="description" rows="3"></textarea></div>
+        <div class="row">
+          <div class="field" style="flex:1"><label>Category</label><input class="input" name="category" placeholder="Development" /></div>
+          <div class="field"><label>Level</label><select class="input" name="level"><option value="">—</option><option>beginner</option><option>intermediate</option><option>advanced</option></select></div>
+          <div class="field"><label>Required tier</label><select class="input" name="required_tier"><option>basic</option><option>pro</option><option>premium</option></select></div>
+        </div>
+        <button class="btn btn-primary btn-lg" style="width:100%">Create course</button>
+      </form></div></section>`;
+  document.getElementById("cform").onsubmit = async (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const title = f.get("title");
+    const slug = slugify(title) + "-" + Math.random().toString(36).slice(2, 6);
+    const { data, error } = await supabase.from("courses").insert({
+      creator_id: session.user.id, creator_name: profile?.full_name || null, title, slug,
+      subtitle: f.get("subtitle") || null, description: f.get("description") || null,
+      category: f.get("category") || null, level: f.get("level") || null,
+      required_tier: f.get("required_tier") || "basic", status: "draft",
+    }).select().maybeSingle();
+    if (error) { document.getElementById("msg").innerHTML = `<div class="alert danger">${esc(error.message)}</div>`; return; }
+    go("#/creator/course/" + data.id);
+  };
+}
+
+async function viewCreatorCourse(m) {
+  if (!(await requireRole(["creator", "admin"]))) return;
+  const id = decodeURIComponent(m[1]);
+  const { data: course } = await supabase.from("courses").select("*").eq("id", id).maybeSingle();
+  if (!course) { app.innerHTML = `<div class="container section"><h2>Course not found</h2></div>`; return; }
+  const modules = await getCurriculum(id);
+  app.innerHTML = `
+    <section class="container section">
+      <a class="muted" href="#/creator" style="font-size:13px">← Studio</a>
+      <div class="section-head"><h2 style="margin:6px 0 0">${esc(course.title)}</h2>
+        <button class="btn ${course.status === "published" ? "btn-outline" : "btn-primary"}" id="pub">${course.status === "published" ? "Unpublish" : "Publish"}</button></div>
+      <div class="card pad row" style="margin-bottom:18px">${tierBadge(course.required_tier)}<span class="badge ${course.status === "published" ? "success" : ""}">${esc(course.status)}</span><span class="muted" style="font-size:13px">${esc(course.subtitle || "")}</span></div>
+      <h3>Curriculum</h3>
+      <div>${modules.map((mod) => `
+        <div class="card pad" style="margin-bottom:12px">
+          <strong>${esc(mod.title)}</strong>
+          <div class="stack" style="margin-top:8px">${mod.lessons.map((l) => `
+            <div class="lesson-row"><span class="t">${esc(l.title)} ${l.is_preview ? '<span class="badge success">preview</span>' : ""} ${tierBadge(l.required_tier || course.required_tier)}</span>
+              <button class="btn btn-ghost btn-sm edit-lesson" data-id="${l.id}">Edit</button></div>`).join("") || '<span class="muted" style="font-size:13px">No lessons yet</span>'}</div>
+          <button class="btn btn-outline btn-sm add-lesson" data-mod="${mod.id}" style="margin-top:10px">+ Lesson</button>
+        </div>`).join("")}</div>
+      <button class="btn btn-outline" id="add-mod">+ Module</button>
+      <div id="lesson-editor"></div>
+    </section>`;
+  document.getElementById("pub").onclick = async () => {
+    const next = course.status === "published" ? "draft" : "published";
+    await supabase.from("courses").update({ status: next, published_at: next === "published" ? new Date().toISOString() : course.published_at }).eq("id", id);
+    router();
+  };
+  document.getElementById("add-mod").onclick = async () => {
+    const title = prompt("Module title"); if (!title) return;
+    await supabase.from("modules").insert({ course_id: id, title, position: modules.length });
+    router();
+  };
+  document.querySelectorAll(".add-lesson").forEach((b) => (b.onclick = async () => {
+    const title = prompt("Lesson title"); if (!title) return;
+    const mod = modules.find((x) => x.id === b.dataset.mod);
+    await supabase.from("lessons").insert({ module_id: b.dataset.mod, course_id: id, title, position: mod ? mod.lessons.length : 0 });
+    router();
+  }));
+  document.querySelectorAll(".edit-lesson").forEach((b) => (b.onclick = () => openLessonEditor(b.dataset.id)));
+}
+
+async function openLessonEditor(lessonId) {
+  const { data: lesson } = await supabase.from("lessons").select("*").eq("id", lessonId).maybeSingle();
+  const { data: content } = await supabase.from("lesson_content").select("*").eq("lesson_id", lessonId).maybeSingle();
+  const ed = document.getElementById("lesson-editor");
+  ed.innerHTML = `<div class="card pad stack" style="margin-top:16px;border-color:var(--border-strong)">
+    <h3 style="margin:0">Edit lesson</h3><div id="led-msg"></div>
+    <div class="field"><label>Title</label><input class="input" id="l-title" value="${esc(lesson.title)}" /></div>
+    <div class="row">
+      <label class="row" style="gap:6px;font-size:14px"><input type="checkbox" id="l-prev" ${lesson.is_preview ? "checked" : ""} /> Free preview</label>
+      <div class="field"><label>Required tier</label><select class="input" id="l-tier"><option value="">inherit course</option>${["basic", "pro", "premium"].map((t) => `<option ${lesson.required_tier === t ? "selected" : ""}>${t}</option>`).join("")}</select></div>
+      <label class="row" style="gap:6px;font-size:14px"><input type="checkbox" id="l-vid" ${lesson.has_video ? "checked" : ""} /> Mock video</label>
+    </div>
+    <div class="field"><label>Content (HTML — sanitized on save)</label><textarea class="input" id="l-html" rows="5">${esc(content?.content_html || "")}</textarea></div>
+    <div class="row"><button class="btn btn-primary" id="l-save">Save</button><button class="btn btn-ghost" id="l-del">Delete</button></div>
+  </div>`;
+  ed.scrollIntoView({ behavior: "smooth" });
+  document.getElementById("l-save").onclick = async () => {
+    const hasVid = document.getElementById("l-vid").checked;
+    const e1 = await supabase.from("lessons").update({
+      title: document.getElementById("l-title").value,
+      is_preview: document.getElementById("l-prev").checked,
+      required_tier: document.getElementById("l-tier").value || null,
+      has_video: hasVid,
+    }).eq("id", lessonId);
+    const e2 = await supabase.from("lesson_content").upsert({
+      lesson_id: lessonId,
+      content_html: sanitize(document.getElementById("l-html").value),
+      cf_stream_uid: hasVid ? content?.cf_stream_uid || "demo-sample-1" : null,
+    }, { onConflict: "lesson_id" });
+    document.getElementById("led-msg").innerHTML = (e1.error || e2.error)
+      ? `<div class="alert danger">${esc((e1.error || e2.error).message)}</div>`
+      : `<div class="alert success">Saved ✓</div>`;
+  };
+  document.getElementById("l-del").onclick = async () => {
+    if (!confirm("Delete this lesson?")) return;
+    await supabase.from("lessons").delete().eq("id", lessonId);
+    router();
+  };
+}
+
+/* ---------------- admin ---------------- */
+async function viewAdmin() {
+  if (!(await requireRole(["admin"]))) return;
+  app.innerHTML = `<div class="container section"><div class="center"><div class="spinner"></div></div></div>`;
+  const [subs, users, courses] = await Promise.all([
+    supabase.from("subscriptions").select("tier,status,billing_interval"),
+    supabase.from("profiles").select("id", { count: "exact", head: true }),
+    supabase.from("courses").select("id,status"),
+  ]);
+  const active = (subs.data || []).filter((s) => ["active", "trialing"].includes(s.status));
+  const PRICE = { basic: 12, pro: 29, premium: 59 };
+  const mrr = active.reduce((n, s) => n + (s.billing_interval === "year" ? (PRICE[s.tier] || 0) : (PRICE[s.tier] || 0)), 0);
+  const published = (courses.data || []).filter((c) => c.status === "published").length;
+  const stat = (l, v) => `<div class="card pad"><div class="muted" style="font-size:13px">${l}</div><div style="font-size:28px;font-weight:700;letter-spacing:-.02em">${v}</div></div>`;
+  app.innerHTML = `
+    <section class="container section">
+      <h2>Admin</h2><p class="section-sub">Platform overview.</p>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+        ${stat("Active subscriptions", active.length)}${stat("Est. MRR", "$" + mrr)}
+        ${stat("Total users", users.count ?? "—")}${stat("Published courses", published)}</div>
+      <div class="row" style="margin-top:22px">
+        <a class="btn btn-outline" href="#/admin/users">Manage users</a>
+        <a class="btn btn-outline" href="#/admin/courses">All courses</a>
+        <a class="btn btn-outline" href="#/admin/subscriptions">Subscriptions</a></div>
+    </section>`;
+}
+
+async function viewAdminUsers() {
+  if (!(await requireRole(["admin"]))) return;
+  const { data: users } = await supabase.from("profiles").select("*").order("created_at");
+  app.innerHTML = `
+    <section class="container section">
+      <a class="muted" href="#/admin" style="font-size:13px">← Admin</a><h2>Users</h2>
+      <div class="card pad stack">${(users || []).map((u) => `
+        <div class="lesson-row"><span class="t">${esc(u.full_name || "—")} <span class="muted" style="font-size:12px">${esc(u.email || "")}</span></span>
+          <select class="input role-sel" data-id="${u.id}" ${u.id === session.user.id ? "disabled title='You cannot change your own role'" : ""}>
+            ${["subscriber", "creator", "admin"].map((r) => `<option ${u.role === r ? "selected" : ""}>${r}</option>`).join("")}</select></div>`).join("")}</div>
+    </section>`;
+  document.querySelectorAll(".role-sel").forEach((s) => (s.onchange = async () => {
+    const { error } = await supabase.from("profiles").update({ role: s.value }).eq("id", s.dataset.id);
+    if (error) alert(error.message);
+  }));
+}
+
+async function viewAdminCourses() {
+  if (!(await requireRole(["admin"]))) return;
+  const { data: courses } = await supabase.from("courses").select("*").order("created_at");
+  app.innerHTML = `
+    <section class="container section"><a class="muted" href="#/admin" style="font-size:13px">← Admin</a><h2>All courses</h2>
+      <div class="card pad stack">${(courses || []).map((c) => `
+        <div class="lesson-row"><span class="t">${esc(c.title)} ${tierBadge(c.required_tier)} <span class="badge ${c.status === "published" ? "success" : ""}">${esc(c.status)}</span></span>
+          <span class="muted" style="font-size:12px">${esc(c.creator_name || "")}</span></div>`).join("")}</div>
+    </section>`;
+}
+
+async function viewAdminSubs() {
+  if (!(await requireRole(["admin"]))) return;
+  const { data: subs } = await supabase.from("subscriptions").select("*");
+  app.innerHTML = `
+    <section class="container section"><a class="muted" href="#/admin" style="font-size:13px">← Admin</a><h2>Subscriptions</h2>
+      <div class="card pad stack">${(subs || []).map((s) => `
+        <div class="lesson-row"><span class="t">${tierBadge(s.tier)} <span class="badge ${s.status === "active" ? "success" : ""}">${esc(s.status)}</span> ${s.cancel_at_period_end ? '<span class="badge warning">cancels</span>' : ""}</span>
+          <span class="muted" style="font-size:12px">${s.current_period_end ? "renews " + new Date(s.current_period_end).toLocaleDateString() : ""}</span></div>`).join("") || '<span class="muted">No subscriptions</span>'}</div>
+    </section>`;
+}
+
 /* ---------------- router ---------------- */
 const routes = [
   [/^#?\/?$/, viewHome],
@@ -361,6 +583,13 @@ const routes = [
   [/^#\/dashboard$/, viewDashboard],
   [/^#\/account$/, viewAccount],
   [/^#\/pricing$/, viewPricing],
+  [/^#\/creator$/, viewCreator],
+  [/^#\/creator\/course\/new$/, viewCreatorNew],
+  [/^#\/creator\/course\/(.+)$/, viewCreatorCourse],
+  [/^#\/admin$/, viewAdmin],
+  [/^#\/admin\/users$/, viewAdminUsers],
+  [/^#\/admin\/courses$/, viewAdminCourses],
+  [/^#\/admin\/subscriptions$/, viewAdminSubs],
 ];
 
 async function router() {

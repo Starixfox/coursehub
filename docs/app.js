@@ -582,10 +582,13 @@ function authForm(mode) {
       if (isReg) {
         const { error } = await supabase.auth.signUp({
           email, password,
-          options: { data: { full_name: f.get("full_name") }, emailRedirectTo: location.origin + location.pathname },
+          options: { data: { full_name: f.get("full_name") } },
         });
         if (error) throw error;
-        setMsg("Account created. If email confirmation is on, check your inbox — then log in.", "success");
+        // Accounts are auto-confirmed, so sign in immediately for a smooth flow.
+        const { error: e2 } = await supabase.auth.signInWithPassword({ email, password });
+        if (e2) { setMsg("Account created — you can now log in.", "success"); btn.disabled = false; return; }
+        await loadSession(); renderNav(); go("#/dashboard"); router(); return;
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;

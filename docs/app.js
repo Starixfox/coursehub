@@ -756,9 +756,9 @@ async function viewCreatorCourse(m) {
           <div style="margin-top:10px">${mod.lessons.map((l) => `
             <div class="lesson-row" style="border:1px solid var(--border);border-radius:9px;margin-bottom:8px"><span class="t">${esc(l.title)} ${l.is_preview ? '<span class="label gold">preview</span>' : ""} ${tierBadge(l.required_tier || course.required_tier)}</span>
               <button class="btn btn-ghost btn-sm edit-lesson" data-id="${l.id}">Edit</button></div>`).join("") || '<span class="muted" style="font-size:13px">No lessons yet</span>'}</div>
-          <button class="btn btn-outline btn-sm add-lesson" data-mod="${mod.id}" style="margin-top:10px">+ Lesson</button>
+          <div class="row" style="margin-top:10px;gap:8px"><input class="input new-lesson-inp" data-mod="${mod.id}" placeholder="New lesson title…" style="max-width:260px;height:38px" /><button class="btn btn-outline btn-sm add-lesson" data-mod="${mod.id}">+ Add lesson</button></div>
         </div>`).join("")}</div>
-      <button class="btn btn-outline" id="add-mod">+ Module</button>
+      <div class="row" style="gap:8px;margin-top:6px"><input class="input" id="new-mod" placeholder="New module title…" style="max-width:300px" /><button class="btn btn-outline" id="add-mod">+ Add module</button></div>
       <div id="lesson-editor"></div>
     </section>`;
   document.getElementById("pub").onclick = async () => {
@@ -767,16 +767,22 @@ async function viewCreatorCourse(m) {
     router();
   };
   document.getElementById("add-mod").onclick = async () => {
-    const title = prompt("Module title"); if (!title) return;
-    await supabase.from("modules").insert({ course_id: id, title, position: modules.length });
+    const inp = document.getElementById("new-mod");
+    const title = inp.value.trim(); if (!title) { inp.focus(); return; }
+    const { error } = await supabase.from("modules").insert({ course_id: id, title, position: modules.length });
+    if (error) { alert(error.message); return; }
     router();
   };
+  document.getElementById("new-mod").onkeydown = (e) => { if (e.key === "Enter") document.getElementById("add-mod").click(); };
   document.querySelectorAll(".add-lesson").forEach((b) => (b.onclick = async () => {
-    const title = prompt("Lesson title"); if (!title) return;
+    const inp = document.querySelector(`.new-lesson-inp[data-mod="${b.dataset.mod}"]`);
+    const title = inp.value.trim(); if (!title) { inp.focus(); return; }
     const mod = modules.find((x) => x.id === b.dataset.mod);
-    await supabase.from("lessons").insert({ module_id: b.dataset.mod, course_id: id, title, position: mod ? mod.lessons.length : 0 });
+    const { error } = await supabase.from("lessons").insert({ module_id: b.dataset.mod, course_id: id, title, position: mod ? mod.lessons.length : 0 });
+    if (error) { alert(error.message); return; }
     router();
   }));
+  document.querySelectorAll(".new-lesson-inp").forEach((inp) => (inp.onkeydown = (e) => { if (e.key === "Enter") document.querySelector(`.add-lesson[data-mod="${inp.dataset.mod}"]`).click(); }));
   document.querySelectorAll(".edit-lesson").forEach((b) => (b.onclick = () => openLessonEditor(b.dataset.id)));
 }
 
@@ -919,18 +925,27 @@ function observeReveals() {
   document.querySelectorAll(".reveal:not(.in)").forEach((el) => _io.observe(el));
 }
 
-async function router() {
+// Serialize navigation so a slow async view can never clobber a newer one.
+let _navChain = Promise.resolve();
+function router() {
+  _navChain = _navChain.then(renderRoute, renderRoute);
+  return _navChain;
+}
+async function renderRoute() {
   const h = location.hash || "#/";
+  const stale = () => (location.hash || "#/") !== h;
   app.innerHTML = `<div class="center"><div class="spinner"></div></div>`;
   window.scrollTo(0, 0);
   for (const [re, view] of routes) {
     const match = h.match(re);
     if (match) {
       try { await view(match); }
-      catch (e) { app.innerHTML = `<div class="container section"><div class="alert danger">${esc(e.message || "Something went wrong.")}</div></div>`; }
+      catch (e) { if (!stale()) app.innerHTML = `<div class="container section"><div class="alert danger">${esc(e.message || "Something went wrong.")}</div></div>`; }
+      if (stale()) return; // a newer navigation superseded this render
       renderNav(); observeReveals(); return;
     }
   }
+  if (stale()) return;
   app.innerHTML = `<div class="container section" style="text-align:center;padding:120px 0"><span class="eyebrow" style="justify-content:center">404</span><h2 style="font-size:40px;margin:14px 0 10px">Page not found</h2><p class="muted" style="margin:0 0 22px">The page you're looking for doesn't exist.</p><a class="btn btn-primary" href="#/">Back home</a></div>`;
   renderNav();
 }

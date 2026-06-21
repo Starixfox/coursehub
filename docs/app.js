@@ -148,7 +148,7 @@ async function viewHome() {
     ["Can I try it before subscribing?", "Yes. Every course has free preview lessons, and you can browse the entire catalog without an account."],
     ["Can I cancel anytime?", "Absolutely — plans are month-to-month and you keep access until the end of your billing period."],
     ["Do I earn a certificate?", "Premium members earn a shareable certificate of completion for every course they finish."],
-    ["How is paid content protected?", "Access is enforced in the database with row-level security. Locked lessons are never sent to your browser — not just hidden in the interface."],
+    ["How is paid content protected?", "Your access is secured on our servers, so paid lessons stay locked until you subscribe to a plan that includes them."],
   ];
   app.innerHTML = `
     <section class="hero container">
@@ -385,7 +385,6 @@ function authForm(mode) {
       <p class="muted" style="font-size:14px;margin-top:14px">
         ${isReg ? `Already have an account? <a class="text-gradient" href="#/login">Log in</a>` : `New here? <a class="text-gradient" href="#/register">Sign up</a>`}
       </p>
-      ${!isReg ? `<p class="muted" style="font-size:13px;margin-top:8px">Demo: <code>pro@coursehub.dev</code> / <code>CourseHubDemo!2026</code></p>` : ""}
     </div></div>`;
   const msg = document.getElementById("auth-msg");
   const setMsg = (t, kind = "danger") => (msg.innerHTML = `<div class="alert ${kind}">${esc(t)}</div>`);
@@ -448,7 +447,7 @@ async function viewAccount() {
         <div class="card pad stack">
           <h3 style="margin:0">Subscription</h3>
           <p style="margin:0">Current plan: ${tierBadge(tier)}</p>
-          <p class="muted" style="margin:0;font-size:14px">Tier access is resolved server-side via the <code>my_current_tier</code> RPC and enforced by RLS.</p>
+          <p class="muted" style="margin:0;font-size:14px">Manage your plan and your access to courses.</p>
           <a class="btn btn-outline btn-sm" href="#/pricing">Change plan</a>
         </div>
       </div>
@@ -476,7 +475,7 @@ function viewPricing() {
             <div style="margin-top:auto">${tier === t.id ? `<button class="btn btn-outline" style="width:100%" disabled>Current plan</button>` : `<a class="btn ${t.highlight ? "btn-primary" : "btn-outline"}" style="width:100%" href="${session ? "#/account" : "#/register"}">${t.price ? "Choose " + t.name : "Get started"}</a>`}</div>
           </div>`).join("")}
       </div>
-      <p class="muted" style="font-size:13px;margin-top:18px">Note: this static build demonstrates Supabase auth + RLS gating. Live Stripe checkout runs in the full server variant of this repo.</p>
+      <p class="muted" style="font-size:13px;margin-top:18px">All plans are billed monthly and you can cancel anytime. Prices in USD.</p>
     </section>`;
 }
 
@@ -583,9 +582,9 @@ async function openLessonEditor(lessonId) {
     <div class="row">
       <label class="row" style="gap:6px;font-size:14px"><input type="checkbox" id="l-prev" ${lesson.is_preview ? "checked" : ""} /> Free preview</label>
       <div class="field"><label>Required tier</label><select class="input" id="l-tier"><option value="">inherit course</option>${["basic", "pro", "premium"].map((t) => `<option ${lesson.required_tier === t ? "selected" : ""}>${t}</option>`).join("")}</select></div>
-      <label class="row" style="gap:6px;font-size:14px"><input type="checkbox" id="l-vid" ${lesson.has_video ? "checked" : ""} /> Mock video</label>
+      <label class="row" style="gap:6px;font-size:14px"><input type="checkbox" id="l-vid" ${lesson.has_video ? "checked" : ""} /> Video lesson</label>
     </div>
-    <div class="field"><label>Content (HTML — sanitized on save)</label><textarea class="input" id="l-html" rows="5">${esc(content?.content_html || "")}</textarea></div>
+    <div class="field"><label>Lesson content</label><textarea class="input" id="l-html" rows="5">${esc(content?.content_html || "")}</textarea></div>
     <div class="row"><button class="btn btn-primary" id="l-save">Save</button><button class="btn btn-ghost" id="l-del">Delete</button></div>
   </div>`;
   ed.scrollIntoView({ behavior: "smooth" });

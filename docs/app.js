@@ -40,6 +40,8 @@ const ICONS = {
   search: '<circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/>',
   arrow: '<line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/>',
   users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  menu: '<line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/>',
+  close: '<line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/>',
 };
 const icon = (n, attrs = "") =>
   `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${attrs}>${ICONS[n] || ""}</svg>`;
@@ -94,15 +96,23 @@ async function loadSession() {
   }
 }
 
+async function signOut() { await supabase.auth.signOut(); await loadSession(); go("#/"); router(); }
+
 function renderNav() {
+  const isStaff = profile?.role === "creator" || profile?.role === "admin";
   const right = session
     ? `${tierBadge(tier)}
-       ${profile?.role === "creator" || profile?.role === "admin" ? `<a class="btn btn-ghost btn-sm" href="#/creator">Studio</a>` : ""}
+       ${isStaff ? `<a class="btn btn-ghost btn-sm" href="#/creator">Studio</a>` : ""}
        ${profile?.role === "admin" ? `<a class="btn btn-ghost btn-sm" href="#/admin">Admin</a>` : ""}
        <a class="btn btn-ghost btn-sm" href="#/account">Account</a>
        <button class="btn btn-outline btn-sm" id="signout">Sign out</button>`
     : `<a class="btn btn-ghost btn-sm" href="#/login">Log in</a>
        <a class="btn btn-primary btn-sm" href="#/register">Get started</a>`;
+  const mobile = session
+    ? `<a href="#/catalog">Courses</a><a href="#/pricing">Pricing</a><a href="#/dashboard">Dashboard</a>
+       ${isStaff ? `<a href="#/creator">Studio</a>` : ""}${profile?.role === "admin" ? `<a href="#/admin">Admin</a>` : ""}
+       <a href="#/account">Account</a><a href="#/certificates">Certificates</a><a href="#" id="signout-m">Sign out</a>`
+    : `<a href="#/catalog">Courses</a><a href="#/pricing">Pricing</a><a href="#/login">Log in</a><a href="#/register">Get started</a>`;
   navEl.innerHTML = `
     <a class="brand" href="#/">Course<b>Hub</b></a>
     <nav class="nav-links">
@@ -111,9 +121,15 @@ function renderNav() {
       ${session ? `<a href="#/dashboard">Dashboard</a>` : ""}
     </nav>
     <div class="nav-spacer"></div>
-    <div class="nav-right">${right}</div>`;
+    <div class="nav-right">${right}</div>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu">${icon("menu", 'width="20" height="20"')}</button>
+    <div class="mobile-menu" id="mobile-menu">${mobile}</div>`;
   const so = document.getElementById("signout");
-  if (so) so.onclick = async () => { await supabase.auth.signOut(); await loadSession(); go("#/"); router(); };
+  if (so) so.onclick = signOut;
+  const som = document.getElementById("signout-m");
+  if (som) som.onclick = (e) => { e.preventDefault(); signOut(); };
+  const tg = document.getElementById("nav-toggle"), mm = document.getElementById("mobile-menu");
+  if (tg) tg.onclick = () => { const open = mm.classList.toggle("open"); tg.innerHTML = icon(open ? "close" : "menu", 'width="20" height="20"'); };
 }
 
 /* ---------------- data ---------------- */

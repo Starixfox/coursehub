@@ -120,7 +120,14 @@ header.nav {
 .nav-links a:hover::after { width: 100%; }
 .nav-spacer { flex: 1; }
 .nav-right { display: flex; align-items: center; gap: 12px; }
-@media (max-width: 740px) { .nav-links { display: none; } }
+.nav-toggle { display: none; width: 42px; height: 42px; border-radius: 11px; border: 1px solid var(--border-2); background: transparent; color: var(--fg); align-items: center; justify-content: center; cursor: pointer; }
+.mobile-menu { display: none; position: absolute; top: 70px; left: 0; right: 0; background: var(--bg-elev); border-bottom: 1px solid var(--border); padding: 12px 24px 22px; flex-direction: column; box-shadow: var(--shadow); }
+.mobile-menu.open { display: flex; }
+.mobile-menu a { padding: 13px 4px; font-size: 15.5px; color: var(--muted); border-bottom: 1px solid var(--border); }
+.mobile-menu a:last-child { border-bottom: none; }
+.mobile-menu a:hover { color: var(--gold); }
+@media (max-width: 740px) { .nav-links { display: none; } .nav-right { display: none; } .nav-toggle { display: flex; } }
+@media (min-width: 741px) { .mobile-menu { display: none !important; } }
 
 /* ---------- buttons ---------- */
 .btn {

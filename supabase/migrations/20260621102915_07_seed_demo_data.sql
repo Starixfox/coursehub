@@ -1,5 +1,7 @@
--- CourseHub :: Migration 07 — demo seed (accounts, courses, content, subscription)
--- Demo password for ALL accounts: CourseHubDemo!2026
+-- CourseHub :: Migration 07 — seed (accounts, courses, content, subscription)
+-- NOTE: replace CHANGE_ME_BEFORE_PRODUCTION with a real password (or seed via the
+-- Auth admin API) before using this in production. Live passwords are rotated and
+-- are NOT stored in this repo.
 
 insert into auth.users
   (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -8,16 +10,16 @@ insert into auth.users
    is_sso_user, is_anonymous)
 values
   ('00000000-0000-0000-0000-000000000000','11111111-1111-1111-1111-111111111111','authenticated','authenticated',
-   'admin@coursehub.dev', crypt('CourseHubDemo!2026', gen_salt('bf')), now(),
+   'admin@coursehub.dev', crypt('CHANGE_ME_BEFORE_PRODUCTION', gen_salt('bf')), now(),
    '{"provider":"email","providers":["email"]}','{"full_name":"Avery Admin"}', now(), now(), '', '', '', '', false, false),
   ('00000000-0000-0000-0000-000000000000','22222222-2222-2222-2222-222222222222','authenticated','authenticated',
-   'creator@coursehub.dev', crypt('CourseHubDemo!2026', gen_salt('bf')), now(),
+   'creator@coursehub.dev', crypt('CHANGE_ME_BEFORE_PRODUCTION', gen_salt('bf')), now(),
    '{"provider":"email","providers":["email"]}','{"full_name":"Casey Creator"}', now(), now(), '', '', '', '', false, false),
   ('00000000-0000-0000-0000-000000000000','33333333-3333-3333-3333-333333333333','authenticated','authenticated',
-   'pro@coursehub.dev', crypt('CourseHubDemo!2026', gen_salt('bf')), now(),
+   'pro@coursehub.dev', crypt('CHANGE_ME_BEFORE_PRODUCTION', gen_salt('bf')), now(),
    '{"provider":"email","providers":["email"]}','{"full_name":"Pat Pro"}', now(), now(), '', '', '', '', false, false),
   ('00000000-0000-0000-0000-000000000000','44444444-4444-4444-4444-444444444444','authenticated','authenticated',
-   'free@coursehub.dev', crypt('CourseHubDemo!2026', gen_salt('bf')), now(),
+   'free@coursehub.dev', crypt('CHANGE_ME_BEFORE_PRODUCTION', gen_salt('bf')), now(),
    '{"provider":"email","providers":["email"]}','{"full_name":"Finley Free"}', now(), now(), '', '', '', '', false, false);
 
 insert into auth.identities (user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)

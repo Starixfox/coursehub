@@ -66,6 +66,14 @@ const fmtDur = (s) => {
 const tierBadge = (t) => `<span class="tier-pill ${t}">${esc(cap(t))}</span>`;
 const statusLabel = (s) => `<span class="label ${s === "published" ? "gold" : ""}">${esc(s)}</span>`;
 const go = (hash) => (location.hash = hash);
+const parseYouTube = (u) => {
+  if (!u) return null;
+  const s = String(u).trim();
+  const m = s.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|[?&]v=)([A-Za-z0-9_-]{11})/);
+  if (m) return m[1];
+  if (/^[A-Za-z0-9_-]{11}$/.test(s)) return s;
+  return null;
+};
 const slugify = (s) => String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
 const sanitize = (html) =>
   DOMPurify.sanitize(html ?? "", {
@@ -424,8 +432,10 @@ async function viewLesson(m) {
   const next = idx >= 0 && idx < flat.length - 1 ? flat[idx + 1] : null;
   const prev = idx > 0 ? flat[idx - 1] : null;
   // THE GATE: lesson_content is returned by RLS only if preview / owned / entitled.
-  const { data: content } = await supabase.from("lesson_content").select("content_html, cf_stream_uid").eq("lesson_id", lessonId).maybeSingle();
+  const { data: content } = await supabase.from("lesson_content").select("content_html, cf_stream_uid, video_url").eq("lesson_id", lessonId).maybeSingle();
   const unlocked = !!content;
+  const ytId = unlocked ? parseYouTube(content.video_url) : null;
+  const hasSampleVideo = unlocked && !ytId && !!content.cf_stream_uid;
 
   let myProg = null, coursePct = 0, doneSet = new Set();
   if (session) {
@@ -462,7 +472,11 @@ async function viewLesson(m) {
       <div class="reveal">
         <h1 style="font-size:28px;margin:0 0 16px">${esc(lesson.title)}</h1>
         ${unlocked
-          ? `<video id="player" class="player" controls playsinline></video>
+          ? `${ytId
+                ? `<iframe class="player" src="https://www.youtube-nocookie.com/embed/${ytId}?rel=0&modestbranding=1" title="${esc(lesson.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe>`
+                : hasSampleVideo
+                  ? `<video id="player" class="player" controls playsinline></video>`
+                  : ""}
              <div class="prose" style="margin-top:24px">${content.content_html || ""}</div>
              <div class="row" style="margin-top:24px;justify-content:space-between">
                <div class="row"><button class="btn ${alreadyDone ? "btn-outline" : "btn-primary"}" id="complete">${alreadyDone ? "Completed ✓" : icon("check") + " Mark complete"}</button><span class="muted" id="complete-msg" style="font-size:14px"></span></div>
@@ -481,22 +495,24 @@ async function viewLesson(m) {
     </div>`;
 
   if (unlocked) {
-    const v = document.getElementById("player");
-    if (window.Hls && window.Hls.isSupported()) { const hls = new window.Hls(); hls.loadSource(SAMPLE_HLS); hls.attachMedia(v); }
-    else if (v.canPlayType("application/vnd.apple.mpegurl")) { v.src = SAMPLE_HLS; }
-    const resumeAt = myProg?.last_position_seconds || 0;
-    if (resumeAt > 3) v.addEventListener("loadedmetadata", () => { if (resumeAt < v.duration - 5) v.currentTime = resumeAt; }, { once: true });
-    let lastSave = 0;
-    const savePos = (sec) => { if (!session || !sec) return; supabase.from("lesson_progress").upsert({ user_id: session.user.id, lesson_id: lessonId, course_id: lesson.course_id, last_position_seconds: sec }, { onConflict: "user_id,lesson_id" }); };
-    v.addEventListener("timeupdate", () => { const now = Date.now(); if (now - lastSave > 12000) { lastSave = now; savePos(Math.floor(v.currentTime)); } });
-    v.addEventListener("pause", () => savePos(Math.floor(v.currentTime)));
-    window.addEventListener("pagehide", () => savePos(Math.floor(v.currentTime)), { once: true });
+    const v = document.getElementById("player"); // null for a YouTube embed
+    if (v) {
+      if (window.Hls && window.Hls.isSupported()) { const hls = new window.Hls(); hls.loadSource(SAMPLE_HLS); hls.attachMedia(v); }
+      else if (v.canPlayType("application/vnd.apple.mpegurl")) { v.src = SAMPLE_HLS; }
+      const resumeAt = myProg?.last_position_seconds || 0;
+      if (resumeAt > 3) v.addEventListener("loadedmetadata", () => { if (resumeAt < v.duration - 5) v.currentTime = resumeAt; }, { once: true });
+      let lastSave = 0;
+      const savePos = (sec) => { if (!session || !sec) return; supabase.from("lesson_progress").upsert({ user_id: session.user.id, lesson_id: lessonId, course_id: lesson.course_id, last_position_seconds: sec }, { onConflict: "user_id,lesson_id" }); };
+      v.addEventListener("timeupdate", () => { const now = Date.now(); if (now - lastSave > 12000) { lastSave = now; savePos(Math.floor(v.currentTime)); } });
+      v.addEventListener("pause", () => savePos(Math.floor(v.currentTime)));
+      window.addEventListener("pagehide", () => savePos(Math.floor(v.currentTime)), { once: true });
+    }
     const btn = document.getElementById("complete");
     if (btn) btn.onclick = async () => {
       if (!session) { go("#/login"); return; }
       btn.disabled = true;
       const { error } = await supabase.from("lesson_progress").upsert(
-        { user_id: session.user.id, lesson_id: lessonId, course_id: lesson.course_id, completed: true, completed_at: new Date().toISOString(), last_position_seconds: Math.floor(v.currentTime || 0) },
+        { user_id: session.user.id, lesson_id: lessonId, course_id: lesson.course_id, completed: true, completed_at: new Date().toISOString(), last_position_seconds: Math.floor(v?.currentTime || 0) },
         { onConflict: "user_id,lesson_id" });
       if (error) { document.getElementById("complete-msg").textContent = "Could not save"; btn.disabled = false; return; }
       if (next) go("#/lesson/" + next.id); else router();
@@ -799,15 +815,17 @@ async function openLessonEditor(lessonId) {
     <div class="row" style="gap:18px">
       <label class="row" style="gap:6px;font-size:14px"><input type="checkbox" id="l-prev" ${lesson.is_preview ? "checked" : ""} /> Free preview</label>
       <div class="field" style="margin:0"><label>Required tier</label><select class="input" id="l-tier"><option value="">inherit course</option>${["basic", "pro", "premium"].map((t) => `<option ${lesson.required_tier === t ? "selected" : ""}>${t}</option>`).join("")}</select></div>
-      <label class="row" style="gap:6px;font-size:14px"><input type="checkbox" id="l-vid" ${lesson.has_video ? "checked" : ""} /> Video lesson</label>
     </div>
+    <div class="field" style="margin:0"><label>YouTube video URL</label><input class="input" id="l-yt" value="${esc(content?.video_url || "")}" placeholder="https://youtu.be/…  (Unlisted works)" /><span class="muted" style="font-size:12px;margin-top:4px">Upload your lesson to YouTube as <b>Unlisted</b>, then paste the link. Leave blank for a text-only lesson.</span></div>
     <div class="field" style="margin:0"><label>Lesson content</label><textarea class="input" id="l-html" rows="5">${esc(content?.content_html || "")}</textarea></div>
     <div class="row"><button class="btn btn-primary" id="l-save">Save lesson</button><button class="btn btn-danger" id="l-del">Delete</button></div>
   </div>`;
   wireLabels();
   ed.scrollIntoView({ behavior: "smooth" });
   document.getElementById("l-save").onclick = async () => {
-    const hasVid = document.getElementById("l-vid").checked;
+    const yt = document.getElementById("l-yt").value.trim();
+    if (yt && !parseYouTube(yt)) { document.getElementById("led-msg").innerHTML = `<div class="alert danger">That doesn't look like a valid YouTube link.</div>`; return; }
+    const hasVid = !!parseYouTube(yt) || !!content?.cf_stream_uid;
     const e1 = await supabase.from("lessons").update({
       title: document.getElementById("l-title").value,
       is_preview: document.getElementById("l-prev").checked,
@@ -817,7 +835,8 @@ async function openLessonEditor(lessonId) {
     const e2 = await supabase.from("lesson_content").upsert({
       lesson_id: lessonId,
       content_html: sanitize(document.getElementById("l-html").value),
-      cf_stream_uid: hasVid ? content?.cf_stream_uid || "demo-sample-1" : null,
+      cf_stream_uid: content?.cf_stream_uid ?? null,
+      video_url: yt || null,
     }, { onConflict: "lesson_id" });
     document.getElementById("led-msg").innerHTML = (e1.error || e2.error)
       ? `<div class="alert danger">${esc((e1.error || e2.error).message)}</div>`
@@ -942,29 +961,29 @@ function wireLabels() {
   });
 }
 
-// Serialize navigation so a slow async view can never clobber a newer one.
-let _navChain = Promise.resolve();
-function router() {
-  _navChain = _navChain.then(renderRoute, renderRoute);
-  return _navChain;
-}
-async function renderRoute() {
+// Each navigation gets a monotonic id; renders run concurrently (no head-of-line
+// blocking, so a stalled fetch can never freeze the app) but only the LATEST
+// navigation is allowed to commit its nav/final state.
+let _renderId = 0;
+async function router() {
+  const id = ++_renderId;
+  const current = () => id === _renderId;
   const h = location.hash || "#/";
-  const stale = () => (location.hash || "#/") !== h;
   app.innerHTML = `<div class="center"><div class="spinner"></div></div>`;
   window.scrollTo(0, 0);
   for (const [re, view] of routes) {
     const match = h.match(re);
     if (match) {
       try { await view(match); }
-      catch (e) { if (!stale()) app.innerHTML = `<div class="container section"><div class="alert danger">${esc(e.message || "Something went wrong.")}</div></div>`; }
-      if (stale()) return; // a newer navigation superseded this render
-      renderNav(); observeReveals(); wireLabels(); return;
+      catch (e) { if (current()) app.innerHTML = `<div class="container section"><div class="alert danger">${esc(e.message || "Something went wrong.")}</div></div>`; }
+      if (current()) { renderNav(); observeReveals(); wireLabels(); }
+      return;
     }
   }
-  if (stale()) return;
-  app.innerHTML = `<div class="container section" style="text-align:center;padding:120px 0"><span class="eyebrow" style="justify-content:center">404</span><h2 style="font-size:40px;margin:14px 0 10px">Page not found</h2><p class="muted" style="margin:0 0 22px">The page you're looking for doesn't exist.</p><a class="btn btn-primary" href="#/">Back home</a></div>`;
-  renderNav();
+  if (current()) {
+    app.innerHTML = `<div class="container section" style="text-align:center;padding:120px 0"><span class="eyebrow" style="justify-content:center">404</span><h2 style="font-size:40px;margin:14px 0 10px">Page not found</h2><p class="muted" style="margin:0 0 22px">The page you're looking for doesn't exist.</p><a class="btn btn-primary" href="#/">Back home</a></div>`;
+    renderNav();
+  }
 }
 
 window.addEventListener("hashchange", router);

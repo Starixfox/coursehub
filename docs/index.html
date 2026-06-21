@@ -3,19 +3,50 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CourseHub — Learn from the best, on your schedule</title>
+  <title>CourseHub — Learn in-demand skills from expert-led courses</title>
   <meta name="description" content="CourseHub is a subscription learning platform — stream expert-led courses across development, design, data, business and marketing, and learn at your own pace." />
+  <meta property="og:title" content="CourseHub" />
+  <meta property="og:description" content="Stream expert-led courses across development, design, data and business." />
+  <meta name="theme-color" content="#0c0b0a" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%237c6cf6'/%3E%3Ctext x='16' y='22' font-size='18' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700'%3EC%3C/text%3E%3C/svg%3E" />
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230c0b0a'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='%23e8b873' font-family='Georgia,serif' font-weight='600'%3EC%3C/text%3E%3C/svg%3E" />
 </head>
 <body>
   <header class="nav"><div class="container nav-inner" id="nav"></div></header>
   <main id="app"><div class="center"><div class="spinner"></div></div></main>
   <footer class="foot">
-    <div class="container row" style="justify-content:space-between">
-      <div>© <span id="year"></span> CourseHub. All rights reserved.</div>
-      <div class="muted"><a href="#/catalog">Courses</a> · <a href="#/pricing">Pricing</a> · <a href="#/register">Sign up</a></div>
+    <div class="container foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="#/">CourseHub</a>
+        <p class="muted">Learn in-demand skills from expert-led courses, on your schedule.</p>
+      </div>
+      <div class="foot-col">
+        <h4>Explore</h4>
+        <a href="#/catalog">All courses</a>
+        <a href="#/catalog?category=Development">Development</a>
+        <a href="#/catalog?category=Design">Design</a>
+        <a href="#/catalog?category=Data">Data</a>
+      </div>
+      <div class="foot-col">
+        <h4>Membership</h4>
+        <a href="#/pricing">Pricing</a>
+        <a href="#/register">Create account</a>
+        <a href="#/login">Log in</a>
+      </div>
+      <div class="foot-col">
+        <h4>Company</h4>
+        <a href="#/">About</a>
+        <a href="#/">Contact</a>
+        <a href="#/">Terms</a>
+        <a href="#/">Privacy</a>
+      </div>
+    </div>
+    <div class="container foot-bottom">
+      <span>© <span id="year"></span> CourseHub. All rights reserved.</span>
+      <span class="muted">Made for people who never stop learning.</span>
     </div>
   </footer>
   <script>document.getElementById('year').textContent = new Date().getFullYear();</script>

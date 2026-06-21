@@ -375,7 +375,7 @@ async function viewCourse(m) {
             ${hasAccess
               ? `<div class="row" style="gap:8px"><span class="label gold">${icon("check")} Enrolled</span></div>
                  <p class="muted" style="margin:0;font-size:14px">Your ${esc(cap(tier))} plan covers this course.</p>
-                 <a class="btn btn-primary" style="width:100%" href="#/lesson/${allLessons[0]?.id || ""}">Start learning ${icon("arrow")}</a>`
+                 <a class="btn btn-primary" style="width:100%" href="#/learn/${esc(course.slug)}">Start learning ${icon("arrow")}</a>`
               : `<div class="price-tag">${cap(course.required_tier)} plan</div>
                  <p class="muted" style="margin:0;font-size:14px">Subscribe to unlock the full course. Preview lessons are free.</p>
                  <a class="btn btn-primary" style="width:100%" href="#/pricing">View plans</a>

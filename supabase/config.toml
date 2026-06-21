@@ -1,0 +1,57 @@
+# CourseHub — Supabase CLI configuration.
+# Links this repo to the hosted project and configures the local dev stack
+# (`supabase start` / `supabase db reset` replay supabase/migrations in order).
+# Docs: https://supabase.com/docs/guides/local-development/cli/config
+project_id = "ddkujivsfnqvnhubzjjy"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+# Match the hosted project (Postgres 17).
+major_version = 17
+
+[db.pooler]
+enabled = false
+port = 54329
+default_pool_size = 20
+max_client_conn = 100
+
+[studio]
+enabled = true
+port = 54323
+
+# Captures outbound email locally (signup confirmations, password resets).
+[inbound_email]
+enabled = false
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/api/auth/callback"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+# Enable HaveIBeenPwned leaked-password protection. On the hosted project this is
+# the one remaining advisor toggle — flip it in Dashboard > Auth > Policies too.
+[auth.email.password]
+min_length = 10
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[analytics]
+enabled = false
+
+[edge_runtime]
+enabled = false

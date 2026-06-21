@@ -34,7 +34,12 @@ const serverSchema = z.object({
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 });
 
-const parsed = serverSchema.safeParse(process.env);
+// Treat empty-string env vars (e.g. `SUPABASE_SERVICE_ROLE_KEY=`) as unset so
+// optional fields validate and read as "not configured".
+const rawEnv = Object.fromEntries(
+  Object.entries(process.env).map(([k, v]) => [k, v === "" ? undefined : v]),
+);
+const parsed = serverSchema.safeParse(rawEnv);
 if (!parsed.success) {
   throw new Error(
     "Invalid server environment variables:\n" +

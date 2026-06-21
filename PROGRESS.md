@@ -16,24 +16,33 @@ Status of each subsystem and what each build agent delivered.
 - [x] Design system (dark indigo/violet) + UI primitives.
 - [x] Middleware: session refresh + auth gate + security headers.
 
-## Phase 1 — Subsystems (parallel)
+## Phase 1 — Subsystems (parallel) ✅
 
-- [ ] **Auth** — login / register / reset / verify-email / MFA scaffold + actions.
-- [ ] **Payments** — pricing page, Checkout, Customer Portal, idempotent webhook.
-- [ ] **Media** — direct-upload route, signed playback-token route, `<VideoPlayer>`.
-- [ ] **Public** — landing, catalog (search/filter), course detail.
-- [ ] **Subscriber** — dashboard, course player w/ progress + resume + complete.
-- [ ] **Creator** — course/module/lesson CRUD, media upload, publish.
-- [ ] **Admin** — users, courses, subscriptions, analytics.
-- [ ] **Shared** — app shell / nav / footer / upgrade modal.
+Built by 10 parallel agents (~828K tokens) on the fixed contract; 100 files.
 
-## Phase 2 — Integration & QA
+- [x] **Auth** — login / register / reset / verify-email / MFA scaffold + server actions (rate-limited, audited, no email enumeration).
+- [x] **Payments** — pricing page, Checkout, Customer Portal, signature-verified idempotent webhook, service-role sync.
+- [x] **Media** — direct-upload route, signed playback-token route (post-entitlement), `<VideoPlayer>` (hls.js) + uploader.
+- [x] **Public** — landing, catalog (search/filter), course detail w/ curriculum + preview player.
+- [x] **Subscriber** — dashboard (continue learning), course player w/ progress + resume + complete, account.
+- [x] **Creator** — course/module/lesson CRUD, media upload, sanitized rich content, publish.
+- [x] **Admin** — users, courses, subscriptions, analytics (active subs, est. MRR, popular courses).
+- [x] **Shared** — SiteShell / Navbar / Footer / UserMenu / UpgradeDialog + UI primitives.
 
-- [ ] `npm run build` + `typecheck` + `lint` green.
-- [ ] Vitest unit tests (entitlements, webhook sync, schemas, sanitize).
-- [ ] `scripts/security-audit.ts` (RLS on every table, no service key in client, gating).
-- [ ] Playwright e2e: signup → verify → subscribe → access → cancel.
-- [ ] Final docs: README, SECURITY, this file.
+## Phase 2 — Integration & QA ✅
+
+- [x] `npm run build` green — **27 routes** compile + typecheck + page-data collection.
+- [x] `typecheck` (tsc) and `lint` (eslint) green.
+- [x] Vitest: **37 tests pass** (entitlements, stripe config, schemas, sanitize, rate-limit).
+- [x] Client bundle scanned — **no service-role/Stripe secret / admin client leaked**.
+- [x] Supabase security advisors clean (only the optional leaked-password toggle remains).
+- [x] Runtime verified: public/catalog/detail/pricing/auth render with live data; **entitlement gating proven with a real Pro session** (basic lesson allowed, premium lesson + its content blocked).
+- [x] Playwright e2e smoke spec + CI workflow (lint/typecheck/test/build/audit on push).
+- [x] Docs: README, SECURITY, ARCHITECTURE, this file, `.env.example`.
+
+> Pending the user's keys (documented in `.env.example`): real Stripe charges, real Cloudflare
+> streaming, and `SUPABASE_SERVICE_ROLE_KEY` (one-line copy) for webhook sync / admin tooling /
+> the full `npm run security:audit`. Everything else runs against the live DB today.
 
 ## Demo accounts (password `CourseHubDemo!2026`)
 

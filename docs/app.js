@@ -20,6 +20,9 @@ const TIERS = [
     features: ["Everything in Pro", "Early access", "Certificates", "Up to 5 seats", "4K video"] },
 ];
 
+const CAT_ICON = { Development: "💻", Design: "🎨", Business: "📈", Data: "📊", Marketing: "📣" };
+const fmtNum = (n) => Number(n || 0).toLocaleString("en-US");
+
 let session = null;
 let profile = null;
 let tier = "free";
@@ -114,32 +117,115 @@ async function getCurriculum(courseId) {
 /* ---------------- views ---------------- */
 const courseCard = (c) => `
   <div class="card course-card" onclick="location.hash='#/course/${esc(c.slug)}'">
-    <div class="course-thumb">${({ Development: "💻", Design: "🎨", Business: "📈" }[c.category] || "📚")}</div>
+    <div class="course-thumb">${CAT_ICON[c.category] || "📚"}</div>
     <div class="body">
-      <div class="row">${tierBadge(c.required_tier)}${c.level ? `<span class="badge">${esc(c.level)}</span>` : ""}</div>
+      <div class="row">${tierBadge(c.required_tier)}${c.category ? `<span class="badge primary">${esc(c.category)}</span>` : ""}</div>
       <h3>${esc(c.title)}</h3>
       <p class="muted" style="font-size:13px;margin:0">${esc(c.subtitle || "")}</p>
-      <div class="row"><span class="muted" style="font-size:12px">${esc(c.creator_name || "")}</span></div>
+      <div class="row meta" style="margin-top:auto">
+        ${c.rating ? `<span class="stars">★ ${c.rating}</span><span>(${fmtNum(c.rating_count)})</span>` : ""}
+        ${c.students_count ? `<span>· ${fmtNum(c.students_count)} learners</span>` : ""}
+      </div>
+      <div class="row"><span class="muted" style="font-size:12px">${esc(c.creator_name || "")}${c.level ? " · " + esc(c.level) : ""}</span></div>
     </div>
   </div>`;
 
 async function viewHome() {
   const courses = await getCourses();
+  const cats = [...new Set(courses.map((c) => c.category).filter(Boolean))];
+  const totalStudents = courses.reduce((n, c) => n + (c.students_count || 0), 0);
+  const rated = courses.filter((c) => c.rating);
+  const avg = rated.length ? rated.reduce((n, c) => n + Number(c.rating), 0) / rated.length : 0;
+  const popular = [...courses].sort((a, b) => (b.students_count || 0) - (a.students_count || 0)).slice(0, 6);
+  const testimonials = [
+    ["Maya R.", "Frontend Developer", "I went from following tutorials to shipping a real Next.js app in a month. The lessons are short and the projects actually stick."],
+    ["Daniel K.", "Product Manager", "The PM track gave me frameworks I now use every single week. Worth the subscription on its own."],
+    ["Aisha N.", "Data Analyst", "Clear, practical, and no fluff. I finally understand pandas instead of copy-pasting from forums."],
+  ];
+  const faqs = [
+    ["What is CourseHub?", "CourseHub is a subscription learning platform. One membership unlocks a growing library of expert-led video courses across development, design, data, business and marketing — learn at your own pace, on any device."],
+    ["What do I get with a subscription?", "Full access to every course your plan includes: stream all lessons, download resources on Pro and above, track your progress, and resume right where you left off."],
+    ["Can I try it before subscribing?", "Yes. Every course has free preview lessons, and you can browse the entire catalog without an account."],
+    ["Can I cancel anytime?", "Absolutely — plans are month-to-month and you keep access until the end of your billing period."],
+    ["Do I earn a certificate?", "Premium members earn a shareable certificate of completion for every course they finish."],
+    ["How is paid content protected?", "Access is enforced in the database with row-level security. Locked lessons are never sent to your browser — not just hidden in the interface."],
+  ];
   app.innerHTML = `
     <section class="hero container">
-      <span class="badge primary">Powered by Supabase Auth + RLS</span>
-      <h1>Master new skills with <span class="text-gradient">premium courses</span></h1>
-      <p>Stream expert-led courses, learn at your own pace, and unlock more as you grow. Access is enforced by the database — not hidden in the UI.</p>
+      <span class="badge primary">★ ${avg.toFixed(1)} average rating · ${fmtNum(totalStudents)}+ learners</span>
+      <h1>Learn in-demand skills from <span class="text-gradient">expert-led courses</span></h1>
+      <p>CourseHub is a subscription learning platform. Pick a plan and stream professional courses across development, design, data, business and marketing — track your progress, earn certificates, and unlock more as you grow.</p>
       <div class="hero-actions">
-        <a class="btn btn-primary btn-lg" href="#/catalog">Browse catalog</a>
-        <a class="btn btn-outline btn-lg" href="#/pricing">See pricing</a>
+        <a class="btn btn-primary btn-lg" href="#/catalog">Explore courses</a>
+        <a class="btn btn-outline btn-lg" href="#/pricing">View plans</a>
       </div>
     </section>
+
+    <div class="container"><div class="statbar">
+      <div class="s"><b>${courses.length}</b><span>Courses</span></div>
+      <div class="s"><b>${fmtNum(totalStudents)}+</b><span>Learners enrolled</span></div>
+      <div class="s"><b>${avg.toFixed(1)}/5</b><span>Average rating</span></div>
+      <div class="s"><b>${cats.length}</b><span>Categories</span></div>
+      <div class="s"><b>4</b><span>Membership tiers</span></div>
+    </div></div>
+
     <section class="section container">
-      <div class="section-head"><div><h2>Featured courses</h2><p class="section-sub">A taste of what is inside.</p></div>
-        <a class="btn btn-ghost btn-sm" href="#/catalog">View all →</a></div>
-      <div class="grid">${courses.slice(0, 6).map(courseCard).join("") || `<p class="muted">No published courses yet.</p>`}</div>
-    </section>`;
+      <div class="cols-3">
+        <div class="card feature"><div class="ico">🎓</div><h3>Expert-led courses</h3><p>Every course is taught by a practitioner and broken into short, focused lessons you can finish in a sitting.</p></div>
+        <div class="card feature"><div class="ico">🔓</div><h3>One membership, full access</h3><p>Subscribe to a plan and instantly unlock everything it includes. Preview lessons are always free.</p></div>
+        <div class="card feature"><div class="ico">📜</div><h3>Certificates that count</h3><p>Finish a course on Premium and earn a shareable certificate to add to your résumé and LinkedIn.</p></div>
+      </div>
+    </section>
+
+    <section class="section container">
+      <div class="section-head"><div><h2>Browse by category</h2><p class="section-sub">Find your next skill.</p></div></div>
+      <div class="cat-grid">${cats.map((cat) => `
+        <div class="cat-card" onclick="location.hash='#/catalog?category=${encodeURIComponent(cat)}'">
+          <div class="ico">${CAT_ICON[cat] || "📚"}</div><h3>${esc(cat)}</h3>
+          <p class="muted" style="margin:0;font-size:13px">${courses.filter((c) => c.category === cat).length} courses</p></div>`).join("")}</div>
+    </section>
+
+    <section class="section container">
+      <div class="section-head"><div><h2>Most popular</h2><p class="section-sub">What learners are taking right now.</p></div><a class="btn btn-ghost btn-sm" href="#/catalog">View all →</a></div>
+      <div class="grid">${popular.map(courseCard).join("")}</div>
+    </section>
+
+    <section class="section container">
+      <div class="section-head"><div><h2>How it works</h2><p class="section-sub">Start learning in three steps.</p></div></div>
+      <div class="cols-3">
+        <div class="card feature"><div class="step-num">1</div><h3>Choose a plan</h3><p>Pick Basic, Pro or Premium — monthly, and cancel anytime.</p></div>
+        <div class="card feature"><div class="step-num">2</div><h3>Start learning</h3><p>Stream lessons, track your progress, and resume right where you left off.</p></div>
+        <div class="card feature"><div class="step-num">3</div><h3>Earn a certificate</h3><p>Complete a course and showcase your new skill.</p></div>
+      </div>
+    </section>
+
+    <section class="section container">
+      <div class="section-head"><div><h2>Plans for every learner</h2><p class="section-sub">Upgrade as you grow.</p></div><a class="btn btn-ghost btn-sm" href="#/pricing">Compare plans →</a></div>
+      <div class="tiers">${TIERS.map((t) => `
+        <div class="card pad tier ${t.highlight ? "highlight" : ""}">
+          ${t.highlight ? `<span class="badge primary" style="align-self:flex-start">Most popular</span>` : ""}
+          <div><div style="font-weight:600">${t.name}</div><div class="muted" style="font-size:13px">${t.blurb}</div></div>
+          <div class="price">${t.price === 0 ? "Free" : "$" + t.price}<span class="muted" style="font-size:14px;font-weight:400">${t.price ? "/mo" : ""}</span></div>
+          <a class="btn ${t.highlight ? "btn-primary" : "btn-outline"}" style="width:100%" href="#/pricing">${t.price ? "Get " + t.name : "Start free"}</a></div>`).join("")}</div>
+    </section>
+
+    <section class="section container">
+      <div class="section-head"><div><h2>Loved by learners</h2><p class="section-sub">Real outcomes from real members.</p></div></div>
+      <div class="cols-3">${testimonials.map(([n, role, q]) => `
+        <div class="card quote"><p>“${esc(q)}”</p><div class="who"><div class="avatar">${esc(n[0])}</div>
+          <div><div style="font-weight:600;font-size:14px">${esc(n)}</div><div class="muted" style="font-size:12px">${esc(role)}</div></div></div></div>`).join("")}</div>
+    </section>
+
+    <section class="section container">
+      <div class="section-head"><div><h2>Frequently asked questions</h2></div></div>
+      <div class="faq" style="max-width:780px">${faqs.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("")}</div>
+    </section>
+
+    <section class="section container"><div class="cta-band">
+      <h2 style="margin:0 0 8px;font-size:28px">Start learning today</h2>
+      <p class="muted" style="margin:0 auto 20px;max-width:46ch">Join ${fmtNum(totalStudents)}+ learners building real skills on CourseHub.</p>
+      <div class="row" style="justify-content:center"><a class="btn btn-primary btn-lg" href="#/register">Create free account</a><a class="btn btn-outline btn-lg" href="#/catalog">Browse courses</a></div>
+    </div></section>`;
 }
 
 async function viewCatalog() {
@@ -182,25 +268,46 @@ async function viewCourse(m) {
       <span class="t">${esc(l.title)} ${l.is_preview ? `<span class="badge success" style="margin-left:6px">Preview</span>` : ""}</span>
       <span class="dur">${fmtDur(l.duration_seconds)}</span></div>`;
   };
+  const allLessons = modules.flatMap((x) => x.lessons);
+  const totalDur = allLessons.reduce((s, l) => s + (l.duration_seconds || 0), 0);
+  const outcomes = Array.isArray(course.learning_outcomes) ? course.learning_outcomes : [];
+  const tierName = course.required_tier[0].toUpperCase() + course.required_tier.slice(1);
   app.innerHTML = `
     <div class="container detail-head">
       <div>
-        <div class="row">${tierBadge(course.required_tier)}${course.category ? `<span class="badge">${esc(course.category)}</span>` : ""}${course.level ? `<span class="badge">${esc(course.level)}</span>` : ""}</div>
+        <div class="row">${tierBadge(course.required_tier)}${course.category ? `<span class="badge primary">${esc(course.category)}</span>` : ""}${course.level ? `<span class="badge">${esc(course.level)}</span>` : ""}</div>
         <h1>${esc(course.title)}</h1>
-        <p class="muted" style="font-size:17px">${esc(course.subtitle || "")}</p>
+        <p class="muted" style="font-size:17px;margin:6px 0">${esc(course.subtitle || "")}</p>
+        <div class="rating-row">
+          ${course.rating ? `<span class="rating-big">★ ${course.rating}</span><span>(${fmtNum(course.rating_count)} ratings)</span><span>·</span>` : ""}
+          <span>${fmtNum(course.students_count)} learners</span><span>·</span>
+          <span>${allLessons.length} lessons</span><span>·</span><span>${fmtDur(totalDur)}</span>
+        </div>
+        <p class="muted" style="font-size:13px">Created by ${esc(course.creator_name || "")}</p>
+        ${outcomes.length ? `<div class="card pad" style="margin-top:18px"><h2 style="font-size:18px;margin:0 0 14px">What you'll learn</h2><ul class="learn-grid">${outcomes.map((o) => `<li>${esc(String(o))}</li>`).join("")}</ul></div>` : ""}
+        <h2 style="margin-top:26px;font-size:20px">About this course</h2>
         <p class="prose">${esc(course.description || "")}</p>
-        <p class="muted" style="font-size:13px">Instructor · ${esc(course.creator_name || "")}</p>
-        <h2 style="margin-top:28px;font-size:20px">Curriculum</h2>
+        <h2 style="margin-top:26px;font-size:20px">Curriculum</h2>
+        <p class="muted" style="font-size:13px;margin-top:0">${modules.length} section${modules.length === 1 ? "" : "s"} · ${allLessons.length} lessons · ${fmtDur(totalDur)} total</p>
         ${modules.map((mod) => `<div class="module"><p class="module-title">${esc(mod.title)}</p>${mod.lessons.map(lessonRow).join("")}</div>`).join("") || `<p class="muted">No lessons yet.</p>`}
       </div>
       <div class="card pad cta-card stack">
         ${hasAccess
-          ? `<p style="margin:0;font-weight:600">You have access ✓</p><p class="muted" style="margin:0;font-size:14px">Your ${esc(tier)} plan covers this course.</p>
-             <a class="btn btn-primary" href="#/lesson/${modules.flatMap((x) => x.lessons)[0]?.id || ""}">Start learning</a>`
-          : `<p style="margin:0;font-weight:600">Requires ${esc(course.required_tier)}</p>
-             <p class="muted" style="margin:0;font-size:14px">Preview lessons are free. Subscribe to unlock the full course.</p>
+          ? `<p style="margin:0;font-weight:600">You're enrolled ✓</p><p class="muted" style="margin:0;font-size:14px">Your ${esc(tier)} plan covers this course.</p>
+             <a class="btn btn-primary" href="#/lesson/${allLessons[0]?.id || ""}">Start learning</a>`
+          : `<div class="price" style="font-size:24px;font-weight:700">${tierName} plan</div>
+             <p class="muted" style="margin:0;font-size:14px">Subscribe to unlock the full course. Preview lessons are free.</p>
              <a class="btn btn-primary" href="#/pricing">View plans</a>
              ${session ? "" : `<a class="btn btn-outline" href="#/login">Log in</a>`}`}
+        <hr />
+        <strong style="font-size:14px">This course includes</strong>
+        <ul class="includes">
+          <li>🎬 ${allLessons.length} on-demand video lessons</li>
+          <li>⏱️ ${fmtDur(totalDur)} of content</li>
+          <li>📱 Access on any device</li>
+          <li>♾️ Full access while subscribed</li>
+          ${course.required_tier === "premium" ? `<li>📜 Certificate of completion</li>` : ""}
+        </ul>
       </div>
     </div>`;
 }

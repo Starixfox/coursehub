@@ -42,6 +42,8 @@ const ICONS = {
   users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   menu: '<line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/>',
   close: '<line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/>',
+  trend: '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
+  scale: '<path d="M12 3v18"/><path d="M5 21h14"/><path d="m3 7 4-4 4 4"/><path d="m13 7 4-4 4 4"/><path d="M3 7l-1 5a4 4 0 0 0 8 0L9 7"/><path d="M17 7l-2 5a4 4 0 0 0 8 0l-2-5"/>',
 };
 const icon = (n, attrs = "") =>
   `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${attrs}>${ICONS[n] || ""}</svg>`;
@@ -273,6 +275,17 @@ async function viewHome() {
         <div class="card feature reveal"><div class="step-num">2</div><h3>Start learning</h3><p>Stream lessons, track your progress, and resume right where you left off.</p></div>
         <div class="card feature reveal"><div class="step-num">3</div><h3>Earn a certificate</h3><p>Complete a course and showcase the skill you just built.</p></div>
       </div>
+    </section>
+
+    <section class="section container">
+      <a class="honest-band reveal" href="#/honest">
+        <div>
+          <span class="eyebrow">Our honest take</span>
+          <h2>We'll tell you what we're <em>not</em> good at yet.</h2>
+          <p>Most platforms only show the highlight reel. See a straight scorecard — what CourseHub does well, and where we're still growing.</p>
+        </div>
+        <span class="btn btn-outline btn-lg">See the honest review ${icon("arrow")}</span>
+      </a>
     </section>
 
     <section class="section container">
@@ -705,6 +718,66 @@ function viewPricing() {
     </section>`;
 }
 
+function viewHonest() {
+  // Honest self-assessment. Strengths are real; the "still growing" column is
+  // candid but product-framed — true limitations, no fabricated claims either way.
+  const strengths = [
+    ["unlock", "One membership, the whole library", "Subscribe once and every course your plan includes is unlocked — no per-course fees and no upsells mid-lesson."],
+    ["play", "Try before you pay", "Every course has free preview lessons and you can browse the whole catalog without an account. You see exactly what you're buying."],
+    ["cap", "Short, practitioner-led lessons", "Courses are taught by working professionals and cut into focused lessons you can finish in one sitting."],
+    ["monitor", "Progress that follows you", "Your progress and resume point sync across devices — start on your laptop, pick up on your phone."],
+    ["lock", "Paid lessons are genuinely protected", "Locked content is enforced on our servers, not just hidden in the page. Your subscription buys real access, not a paywall you can inspect around."],
+    ["award", "Certificates worth sharing", "Finish a course on Premium and earn a verifiable certificate for your résumé and LinkedIn."],
+    ["chart", "A calm, fast interface", "No autoplay ads, no dark patterns, no clutter — just your course and a clear path through it."],
+  ];
+  const growing = [
+    ["cap", "The catalog is still growing", "We're a curated library, not an endless one — you'll find fewer titles than the mega-platforms. We'd rather ship courses we stand behind than pad the count."],
+    ["monitor", "Web-first, apps on the way", "CourseHub runs in any browser on any device today. Native iOS and Android apps aren't out yet."],
+    ["unlock", "Self-serve checkout is rolling out", "Instant self-serve plan changes are still being finished — until then, some billing steps are handled for you."],
+    ["film", "No offline downloads yet", "Lessons stream online. Downloading videos to watch offline isn't available yet, though Pro and above can download resources."],
+    ["infinity", "Subscription only", "We don't sell one-off courses or lifetime deals. Access lasts while your plan is active."],
+    ["award", "Certificates are Premium-only", "Completion certificates are currently a Premium perk and aren't available on the lower tiers."],
+    ["users", "English-only for now", "All course content is in English today — localized courses aren't available yet."],
+  ];
+  const ledgerItem = (col) => ([ic, h, p]) => `
+    <li class="ledger-item">
+      <span class="li-ico">${icon(ic)}</span>
+      <div><h4>${esc(h)}</h4><p>${esc(p)}</p></div>
+    </li>`;
+  app.innerHTML = `
+    <section class="container section">
+      <div class="reveal" style="max-width:680px">
+        <span class="eyebrow">Our honest take</span>
+        <h2 style="font-size:clamp(30px,4.6vw,46px);margin:14px 0 10px">Strengths &amp; weaknesses, <em class="gold italic">no highlight reel</em>.</h2>
+        <p class="section-sub" style="font-size:17px;max-width:62ch">Most platforms only show you what they're good at. Here's a straight scorecard for CourseHub — what we do genuinely well, and where we're still growing. Every line is honest; you can decide with your eyes open.</p>
+      </div>
+
+      <div class="ledger reveal" style="margin-top:36px">
+        <div class="card ledger-col up">
+          <div class="ledger-head">
+            <span class="lh-ico">${icon("check")}</span>
+            <div><h3>What we do well</h3><p class="muted" style="margin:2px 0 0;font-size:13.5px">Where CourseHub earns its keep</p></div>
+          </div>
+          <ul class="ledger-list">${strengths.map(ledgerItem("up")).join("")}</ul>
+        </div>
+        <div class="card ledger-col grow">
+          <div class="ledger-head">
+            <span class="lh-ico">${icon("trend")}</span>
+            <div><h3>Where we're still growing</h3><p class="muted" style="margin:2px 0 0;font-size:13.5px">Real limitations, said plainly</p></div>
+          </div>
+          <ul class="ledger-list">${growing.map(ledgerItem("grow")).join("")}</ul>
+        </div>
+      </div>
+
+      <div class="cta-band reveal" style="margin-top:44px">
+        <span class="eyebrow" style="justify-content:center">Why we publish this</span>
+        <h2 style="margin-top:14px">We'd rather you subscribe knowing exactly what you get.</h2>
+        <p>An honest scorecard is rare — and it's the fastest way to build trust. Preview any course free, and if a limitation above is a dealbreaker, no hard feelings.</p>
+        <div class="row" style="justify-content:center"><a class="btn btn-primary btn-lg" href="#/catalog">Browse courses ${icon("arrow")}</a><a class="btn btn-outline btn-lg" href="#/pricing">View plans</a></div>
+      </div>
+    </section>`;
+}
+
 /* ---------------- creator studio ---------------- */
 async function viewCreator() {
   if (!(await requireRole(["creator", "admin"]))) return;
@@ -929,6 +1002,7 @@ const routes = [
   [/^#\/account$/, viewAccount],
   [/^#\/certificates$/, viewCertificates],
   [/^#\/pricing$/, viewPricing],
+  [/^#\/honest$/, viewHonest],
   [/^#\/creator$/, viewCreator],
   [/^#\/creator\/course\/new$/, viewCreatorNew],
   [/^#\/creator\/course\/(.+)$/, viewCreatorCourse],

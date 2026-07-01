@@ -376,6 +376,39 @@ footer.foot { border-top: 1px solid var(--border); margin-top: 80px; padding: 56
 .foot-col a:hover { color: var(--gold); }
 .foot-bottom { display: flex; justify-content: space-between; gap: 16px; margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted-2); flex-wrap: wrap; }
 
+/* ---------- honest take (strengths & weaknesses) ---------- */
+.honest-band {
+  display: flex; align-items: center; justify-content: space-between; gap: 28px; flex-wrap: wrap;
+  padding: 34px 36px; border-radius: var(--radius-lg); border: 1px solid var(--border);
+  background: linear-gradient(160deg, var(--card-2), var(--card)); cursor: pointer;
+  transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+}
+.honest-band:hover { border-color: var(--gold-line); transform: translateY(-2px); box-shadow: var(--shadow); }
+.honest-band h2 { font-size: clamp(23px, 3vw, 31px); margin: 12px 0 8px; }
+.honest-band h2 em { font-style: italic; color: var(--gold); }
+.honest-band p { color: var(--muted); font-size: 15px; margin: 0; max-width: 56ch; }
+.honest-band .btn { flex-shrink: 0; }
+
+.ledger { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+@media (max-width: 820px) { .ledger { grid-template-columns: 1fr; } }
+.ledger-col { padding: 30px 28px; }
+.ledger-col.up { border-color: var(--gold-line); }
+.ledger-head { display: flex; align-items: center; gap: 14px; }
+.ledger-head h3 { font-size: 22px; }
+.lh-ico { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.lh-ico svg { width: 23px; height: 23px; }
+.ledger-col.up .lh-ico { background: var(--gold-soft); color: var(--gold); }
+.ledger-col.grow .lh-ico { background: var(--surface); color: var(--muted); border: 1px solid var(--border-2); }
+.ledger-list { list-style: none; padding: 0; margin: 20px 0 0; display: flex; flex-direction: column; }
+.ledger-item { display: flex; gap: 15px; padding: 17px 0; border-top: 1px solid var(--border); align-items: flex-start; }
+.ledger-item:first-child { border-top: none; padding-top: 4px; }
+.li-ico { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.li-ico svg { width: 17px; height: 17px; }
+.ledger-col.up .li-ico { background: var(--gold-soft); color: var(--gold); }
+.ledger-col.grow .li-ico { background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+.ledger-item h4 { font-family: var(--serif); font-weight: 500; font-size: 17px; margin: 0 0 4px; }
+.ledger-item p { color: var(--muted); font-size: 14px; line-height: 1.55; margin: 0; }
+
 /* ---------- misc ---------- */
 .spinner { width: 26px; height: 26px; border: 2px solid var(--border-2); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }

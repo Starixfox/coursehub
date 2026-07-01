@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "C:/GitHub/coursehub", "run", "dev"],
       "port": 3000
+    },
+    {
+      "name": "coursehub-docs",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "5181", "--directory", "C:/GitHub/coursehub/docs"],
+      "port": 5181
     }
   ]
 }

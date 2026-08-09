@@ -22,8 +22,8 @@ const mkSerif = Instrument_Serif({
 
 export const metadata: Metadata = {
   title: {
-    default: "Loopwork · AI-powered workflow automation",
-    template: "%s · Loopwork",
+    default: "Agora · AI-powered workflow automation",
+    template: "%s · Agora",
   },
   description:
     "We design and implement AI-powered workflows that handle repetitive business processes for you: from lead management and communication to administration and operations.",

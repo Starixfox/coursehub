@@ -4,7 +4,7 @@ import { SetHtmlLang } from "@/components/marketing/set-html-lang";
 import { NL } from "@/components/marketing/copy";
 
 export const metadata: Metadata = {
-  title: { absolute: "Loopwork · AI-gedreven workflowautomatisering" },
+  title: { absolute: "Agora · AI-gedreven workflowautomatisering" },
   description:
     "Wij ontwerpen en implementeren AI-workflows die repetitieve bedrijfsprocessen voor je afhandelen: van leadbeheer en communicatie tot administratie en operations.",
   alternates: {

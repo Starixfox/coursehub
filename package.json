@@ -31,6 +31,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "sanitize-html": "^2.17.5",
+    "shaders": "^2.5.124",
     "stripe": "^22.2.2",
     "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3"

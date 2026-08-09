@@ -452,9 +452,9 @@ export const EN: MarketingCopy = {
     titleSerif: "We’ll build the system that runs it.",
     sub: "Bring us one workflow that takes too much of your time. We’ll show you what could be automated, what should stay human, and what it would take to build.",
     button: "Request your free workflow audit",
-    mailHref: "mailto:hello@loopwork.be?subject=Free%20workflow%20audit",
+    mailHref: "mailto:hello@agora.be?subject=Free%20workflow%20audit",
     mailLead: "Or e-mail us directly:",
-    mailAddress: "hello@loopwork.be",
+    mailAddress: "hello@agora.be",
   },
   footer: {
     aria: "Footer",
@@ -466,7 +466,7 @@ export const EN: MarketingCopy = {
       { href: "#faq", label: "FAQ" },
       { href: "#audit", label: "Contact" },
     ],
-    legalLeft: "© 2026 Loopwork. AI-powered workflow automation.",
+    legalLeft: "© 2026 Agora. AI-powered workflow automation.",
     legalRight: "Find your automation opportunities.",
   },
 };
@@ -788,9 +788,9 @@ export const NL: MarketingCopy = {
     titleSerif: "Wij bouwen het systeem dat hem voor je uitvoert.",
     sub: "Breng ons één workflow die te veel van je tijd opslokt. We tonen je wat geautomatiseerd kan worden, wat menselijk moet blijven en wat ervoor nodig is.",
     button: "Vraag je gratis workflow-audit aan",
-    mailHref: "mailto:hello@loopwork.be?subject=Gratis%20workflow-audit",
+    mailHref: "mailto:hello@agora.be?subject=Gratis%20workflow-audit",
     mailLead: "Of mail ons rechtstreeks:",
-    mailAddress: "hello@loopwork.be",
+    mailAddress: "hello@agora.be",
   },
   footer: {
     aria: "Voettekst",
@@ -802,7 +802,7 @@ export const NL: MarketingCopy = {
       { href: "#faq", label: "FAQ" },
       { href: "#audit", label: "Contact" },
     ],
-    legalLeft: "© 2026 Loopwork. AI-gedreven workflowautomatisering.",
+    legalLeft: "© 2026 Agora. AI-gedreven workflowautomatisering.",
     legalRight: "Ontdek je automatiseringskansen.",
   },
 };

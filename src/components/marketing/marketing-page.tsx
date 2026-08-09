@@ -5,6 +5,8 @@ import { SiteNav } from "./site-nav";
 import { WorkflowTabs } from "./workflow-tabs";
 import { RoiCalculator } from "./roi-calculator";
 import { Reveal } from "./reveal";
+import { HeroShader } from "./hero-shader";
+import { AgoraLogo } from "./agora-logo";
 
 function SectionCrosses() {
   return (
@@ -68,6 +70,9 @@ export function MarketingPage({ copy }: { copy: MarketingCopy }) {
       <main>
         {/* ------------------------------------------------------- hero --- */}
         <section className="mk-hero">
+          <div className="mk-hero__shader" aria-hidden="true">
+            <HeroShader />
+          </div>
           <div className="mk-hero__grid" aria-hidden="true" />
           <div className="mk-container mk-hero__inner">
             <span className="mk-eyebrow">{copy.hero.eyebrow}</span>
@@ -369,8 +374,8 @@ export function MarketingPage({ copy }: { copy: MarketingCopy }) {
       {/* --------------------------------------------------------- footer --- */}
       <footer className="mk-footer">
         <div className="mk-container mk-footer__inner">
-          <a href="#" className="mk-footer__brand">
-            Loopwork
+          <a href="#" className="mk-footer__brand" aria-label="Agora">
+            <AgoraLogo size={148} />
           </a>
           <nav className="mk-footer__nav" aria-label={copy.footer.aria}>
             {copy.footer.links.map((l) => (

@@ -3,19 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { MarketingCopy } from "./copy";
-
-function BrandMark() {
-  return (
-    <span className="mk-nav__mark" aria-hidden="true">
-      <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
-        <rect x="2" y="9.5" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.5" />
-        <rect x="17" y="9.5" width="5" height="5" rx="2.5" fill="#2b44e7" />
-        <path d="M7 12h10" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="12" cy="12" r="1.6" fill="currentColor" />
-      </svg>
-    </span>
-  );
-}
+import { AgoraMark } from "./agora-logo";
 
 function LangSwitch({ current }: { current: "en" | "nl" }) {
   return (
@@ -57,8 +45,8 @@ export function SiteNav({ copy }: { copy: MarketingCopy }) {
     <header className={`mk-nav ${scrolled || open ? "is-scrolled" : ""}`}>
       <div className="mk-container mk-nav__inner">
         <Link href={home} className="mk-nav__brand">
-          <BrandMark />
-          Loopwork
+          <AgoraMark size={32} />
+          Agora
         </Link>
 
         <nav className="mk-nav__links" aria-label={copy.nav.ariaMain}>

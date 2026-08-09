@@ -434,6 +434,11 @@ html:has(.mkt) ::-webkit-scrollbar-thumb {
   padding-top: clamp(8.5rem, 16vw, 12.5rem);
   padding-bottom: clamp(4rem, 8vw, 6.5rem);
   overflow: hidden;
+  background:
+    radial-gradient(circle at 14% 14%, rgba(224, 154, 60, 0.16), transparent 36%),
+    radial-gradient(circle at 88% 8%, rgba(43, 68, 231, 0.12), transparent 40%),
+    radial-gradient(circle at 24% 100%, rgba(43, 68, 231, 0.14), transparent 32%),
+    radial-gradient(circle at 60% 100%, rgba(31, 122, 77, 0.12), transparent 30%);
 }
 
 .mk-hero__grid {

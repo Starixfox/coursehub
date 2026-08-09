@@ -1,0 +1,5 @@
+{
+  "name": "loopwork-export",
+  "private": true,
+  "description": "Static-export wrapper for the Loopwork marketing pages (GitHub Pages demo). Reuses src/components/marketing from the main app; deps resolve from the parent node_modules."
+}

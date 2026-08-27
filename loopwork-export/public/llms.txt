@@ -1,0 +1,52 @@
+# Agora - AI Workflow Automation Consultancy
+
+> Agora designs and builds automated workflows for small businesses and entrepreneurs in Belgium and the Netherlands. We replace repetitive manual admin with AI-powered automation, without replacing your existing tools or your team.
+
+## What We Do
+
+- Free 30-minute discovery call to identify which workflows are worth automating
+- Paid workflow audit: written analysis with priorities, scope, and automation roadmap
+- Custom automation builds using n8n, Make.com, and direct API integrations
+- Ongoing monitoring and maintenance after deployment
+
+## Who We Serve
+
+Consultants, agencies, studios, service businesses, sales teams, and independent professionals in Belgium and the Netherlands with 10 to 100 employees who spend too much time on repetitive admin.
+
+## Example Workflows Built
+
+- Lead intake: new lead triggers research agent, qualification, personalised email, CRM update — fully automated
+- Email triage: incoming emails classified, draft responses generated, routed to the right person, logged
+- Invoicing automation: invoice generation, sending, and follow-up on unpaid invoices via accounting API
+- Reporting dashboards: automated data collection and scheduled report generation
+- Customer support routing: classify request, check knowledge base, generate answer, escalate when human judgment is needed
+- Project management: brief parsing, task creation in PM tool, status updates, deadline reminders
+
+## Our Approach
+
+We start with the workflow, not the technology. We map how work actually moves through a business, find the steps that repeat every week, and build automation around them. Human judgment stays in the loop wherever it matters — every workflow can include human approval gates.
+
+## Pricing Model
+
+Discovery call: free (30 minutes, honest assessment of what is worth automating).
+Workflow audit: paid, fixed price agreed before the audit starts.
+Automation build: fixed-price quote based on workflow complexity and number of systems connected.
+No subscription lock-in. No surprise invoices. Full handover of everything built.
+
+## Technology Stack
+
+n8n, Make.com, REST APIs, webhooks, AI agents (OpenAI, Anthropic), CRM integrations (HubSpot, Teamleader, Salesforce), email (Gmail, Outlook), accounting (Exact, Twinfield, Billit), project management (Asana, Monday, Notion).
+
+## Service Area
+
+Belgium (Flanders, Brussels, Wallonia), Netherlands. Remote-first. Bilingual: English and Dutch.
+
+## Contact
+
+Website: https://agora.midnightspaceconsultancy.com
+Email: j.guzman@midnightspaceconsultancy.com
+Languages: English, Dutch (Nederlands)
+
+## Company
+
+Agora is a service of Midnight Space Consultancy, founded by Jordan Van Der Sloten, based in Belgium. We work with entrepreneurs and SMEs who need automation built and running, not another AI tool to manage.

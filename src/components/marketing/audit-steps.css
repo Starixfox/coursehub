@@ -1,0 +1,163 @@
+/* ----------------------------------------------------------------------------
+   The audit, step by step (namespace: mk-aud-*)
+
+   Numbered glass plates strung on a rail, vertical on small screens and
+   horizontal from 60rem up. The last step is the deliverable, so it fills
+   gold. Consumes the tokens declared on .mkt in marketing.css.
+---------------------------------------------------------------------------- */
+
+.mk-aud {
+  --mk-aud-plate: 3.35rem;
+  --mk-aud-gap: clamp(1.5rem, 3vw, 2.5rem);
+  margin-top: var(--mk-space-block);
+}
+
+.mk-aud__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+
+.mk-aud__step {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--mk-aud-plate) minmax(0, 1fr);
+  column-gap: clamp(0.9rem, 3vw, 1.25rem);
+  padding-block-end: clamp(1.6rem, 4vw, 2.1rem);
+  align-content: start;
+}
+
+.mk-aud__step:last-child {
+  padding-block-end: 0;
+}
+
+/* The rail. Vertical by default, drawn from under the plate to the next step. */
+.mk-aud__step::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: calc(var(--mk-aud-plate) / 2);
+  top: calc(var(--mk-aud-plate) + 0.4rem);
+  bottom: 0.2rem;
+  width: 1px;
+  background: linear-gradient(180deg, var(--mk-gold-line), var(--mk-line));
+}
+
+.mk-aud__step:last-child::before {
+  display: none;
+}
+
+.mk-aud__marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--mk-aud-plate);
+  height: var(--mk-aud-plate);
+  border: 1px solid var(--mk-glass-border);
+  border-radius: var(--mk-radius-sm);
+  background: var(--mk-glass-grad), var(--mk-glass-bg);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: var(--mk-glass-inset), 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.mk-aud__num {
+  font-family: var(--mk-display);
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--mk-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.mk-aud__text {
+  padding-top: 0.35rem;
+}
+
+.mk-aud__title {
+  margin: 0;
+  font-family: var(--mk-display);
+  font-size: clamp(1.12rem, 2vw, 1.32rem);
+  font-weight: 650;
+  line-height: 1.22;
+  letter-spacing: var(--mk-track-head);
+  color: var(--mk-text-hi);
+  text-wrap: balance;
+}
+
+.mk-aud__body {
+  margin: 0.55rem 0 0;
+  font-size: 0.925rem;
+  line-height: 1.7;
+  color: var(--mk-text-mut);
+  max-width: 32rem;
+  text-wrap: pretty;
+}
+
+/* The step you walk away from holding something. */
+.mk-aud__step--final .mk-aud__marker {
+  border-color: transparent;
+  background: var(--mk-accent);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25), 0 10px 28px rgba(201, 166, 107, 0.3);
+}
+
+.mk-aud__step--final .mk-aud__num {
+  color: var(--mk-on-accent);
+}
+
+.mk-aud__step--final .mk-aud__title {
+  display: inline-block;
+  padding-block-end: 0.3rem;
+  border-block-end: 2px solid var(--mk-accent);
+}
+
+/* ---------------------------------------------------- horizontal rail --- */
+
+@media (min-width: 60rem) {
+  .mk-aud__list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    column-gap: var(--mk-aud-gap);
+  }
+
+  .mk-aud__step {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 1.1rem;
+    padding-block-end: 0;
+  }
+
+  .mk-aud__step::before {
+    inset-inline-start: calc(var(--mk-aud-plate) + 0.6rem);
+    inset-inline-end: calc(0.6rem - var(--mk-aud-gap));
+    top: calc(var(--mk-aud-plate) / 2);
+    bottom: auto;
+    width: auto;
+    height: 1px;
+    background: linear-gradient(90deg, var(--mk-gold-line), var(--mk-line));
+  }
+
+  .mk-aud__text {
+    padding-top: 0;
+  }
+}
+
+@media (min-width: 60rem) {
+  .mk-aud__list:has(.mk-aud__step:nth-child(5)) {
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  }
+}
+
+/* ------------------------------------------------------------- takeaway --- */
+
+.mk-aud__note {
+  margin: clamp(1.9rem, 4vw, 2.75rem) 0 0;
+  padding: clamp(0.9rem, 2.5vw, 1.15rem) clamp(1rem, 3vw, 1.5rem);
+  border-inline-start: 2px solid var(--mk-accent);
+  border-radius: 0 var(--mk-radius-sm) var(--mk-radius-sm) 0;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: clamp(0.95rem, 1.4vw, 1.05rem);
+  line-height: 1.62;
+  color: var(--mk-text-body);
+  max-width: 44rem;
+  text-wrap: pretty;
+}

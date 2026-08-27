@@ -2,21 +2,19 @@ import type { Metadata } from "next";
 import {
   Geist,
   Geist_Mono,
-  Schibsted_Grotesk,
-  Instrument_Serif,
+  Inter,
+  Space_Grotesk,
 } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
-const mkDisplay = Schibsted_Grotesk({
+const mkDisplay = Space_Grotesk({
   variable: "--font-mk-display",
   subsets: ["latin"],
 });
-const mkSerif = Instrument_Serif({
-  variable: "--font-mk-serif",
-  weight: "400",
-  style: ["normal", "italic"],
+const mkSans = Inter({
+  variable: "--font-mk-sans",
   subsets: ["latin"],
 });
 
@@ -36,7 +34,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${mkDisplay.variable} ${mkSerif.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${mkDisplay.variable} ${mkSans.variable} h-full antialiased`}
     >
       {/* suppressHydrationWarning: browser extensions (e.g. unit/currency
           converters) inject attributes onto <body> before React hydrates. */}

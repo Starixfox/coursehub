@@ -1,0 +1,76 @@
+/* ==========================================================================
+   Hero workflow scene (namespace: mk-w3d-*)
+
+   The 3D canvas and the 2D chip flow occupy exactly the same box. The chip
+   flow is server-rendered and sets the height of that box, so promoting the
+   canvas costs no layout shift: the flow only fades out, it never unmounts.
+
+   The .mk-flow-frame, .mk-flow, .mk-chip and .mk-conn rules live in
+   marketing.css and are deliberately not redefined here.
+   ========================================================================== */
+
+.mk-w3d__stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Reserved from the first paint, in both states. */
+  min-height: clamp(15rem, 24vw, 20rem);
+}
+
+.mk-w3d__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 900ms ease;
+}
+
+.mk-w3d.is-live .mk-w3d__canvas {
+  opacity: 1;
+}
+
+/* The 2D flow stacks above the canvas, so it is what you see until the scene
+   is ready. It keeps its box (and its place in the accessibility tree) after
+   the swap: only its opacity changes. */
+.mk-w3d__flat {
+  position: relative;
+  width: 100%;
+  transition: opacity 700ms ease;
+}
+
+.mk-w3d.is-live .mk-w3d__flat {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* No sense burning frames on chip animations nobody can see. */
+.mk-w3d.is-live .mk-w3d__flat *,
+.mk-w3d.is-live .mk-w3d__flat *::before,
+.mk-w3d.is-live .mk-w3d__flat *::after {
+  animation-play-state: paused;
+}
+
+/* Description of the scene, for screen readers only. Rendered only while the
+   canvas is actually live, so it never describes something that is not there. */
+.mk-w3d__desc {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-w3d__canvas,
+  .mk-w3d__flat {
+    transition: none;
+  }
+}

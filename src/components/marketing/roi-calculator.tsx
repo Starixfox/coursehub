@@ -112,8 +112,9 @@ export function RoiCalculator({ copy }: { copy: MarketingCopy["roi"] & { locale:
             </strong>{" "}
             {copy.subAfter}
           </p>
+          <p className="mk-calc__caveat">{copy.caveat}</p>
           <a
-            href="#audit"
+            href="#contact"
             className="mk-btn mk-btn--paper mk-btn--small mk-calc__cta"
           >
             {copy.cta}

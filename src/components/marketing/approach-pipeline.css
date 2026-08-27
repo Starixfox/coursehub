@@ -1,0 +1,67 @@
+/* ----------------------------------------------------------------------------
+   approach-pipeline.css  (namespace: mk-pipe-*)
+
+   Signpost strip under the #approach heading: mono labels, gold dots, hairline
+   connectors. It sits on paper, above the numbered steps, and is meant to be
+   read in one glance and then forgotten.
+
+   Narrow screens drop the connectors and let the labels wrap onto two lines,
+   which keeps them legible instead of shrinking the strip to nothing.
+---------------------------------------------------------------------------- */
+
+.mk-pipe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 0.9rem;
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+}
+
+.mk-pipe__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.mk-pipe__dot {
+  flex: none;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--mk-accent);
+  box-shadow: 0 0 0 3px var(--mk-accent-soft);
+}
+
+.mk-pipe__label {
+  font-family: var(--mk-sans);
+  font-size: 0.7rem;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: var(--mk-track-caps);
+  text-transform: uppercase;
+  color: var(--mk-text-mut);
+  white-space: nowrap;
+}
+
+@media (min-width: 34rem) {
+  .mk-pipe {
+    gap: 0.5rem 0.75rem;
+  }
+
+  .mk-pipe__step + .mk-pipe__step::before {
+    content: "";
+    flex: none;
+    width: clamp(1rem, 2.4vw, 2.25rem);
+    height: 1px;
+    margin-right: 0.25rem;
+    background: linear-gradient(
+      90deg,
+      var(--mk-line-subtle),
+      var(--mk-line-strong) 55%,
+      var(--mk-line-subtle)
+    );
+  }
+}

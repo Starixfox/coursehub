@@ -41,6 +41,16 @@ export function SiteNav({ copy }: { copy: MarketingCopy }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  /* Escape closes the mobile menu, so keyboard users are never trapped in it. */
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
   return (
     <header className={`mk-nav ${scrolled || open ? "is-scrolled" : ""}`}>
       <div className="mk-container mk-nav__inner">
@@ -59,7 +69,7 @@ export function SiteNav({ copy }: { copy: MarketingCopy }) {
 
         <div className="mk-nav__actions">
           <LangSwitch current={copy.lang} />
-          <a href="#audit" className="mk-btn mk-btn--primary mk-btn--small mk-nav__cta">
+          <a href="#contact" className="mk-btn mk-btn--primary mk-btn--small mk-nav__cta">
             {copy.nav.cta}
           </a>
           <button
@@ -89,7 +99,7 @@ export function SiteNav({ copy }: { copy: MarketingCopy }) {
               </a>
             ))}
             <a
-              href="#audit"
+              href="#contact"
               className="mk-btn mk-btn--primary mk-btn--small"
               style={{ marginTop: "0.75rem" }}
               onClick={() => setOpen(false)}

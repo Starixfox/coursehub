@@ -97,15 +97,18 @@ export function WorkflowTabs({ copy }: { copy: MarketingCopy["workflows"] }) {
             ))}
           </div>
 
+          <p className="mk-tabs__outcome">{wf.outcome}</p>
+
           <div className="mk-legend" aria-hidden="true">
             <span>
-              <i style={{ background: "var(--mk-ink)" }} /> {copy.legend.trigger}
+              <i style={{ background: "rgba(255, 255, 255, 0.92)" }} />{" "}
+              {copy.legend.trigger}
             </span>
             <span>
-              <i style={{ background: "var(--mk-accent)" }} /> {copy.legend.ai}
+              <i style={{ background: "var(--mk-ai)" }} /> {copy.legend.ai}
             </span>
             <span>
-              <i style={{ background: "var(--mk-green)" }} /> {copy.legend.human}
+              <i style={{ background: "var(--mk-accent)" }} /> {copy.legend.human}
             </span>
             <span>
               <i

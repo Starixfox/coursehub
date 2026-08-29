@@ -3,6 +3,7 @@ import {
   Geist,
   Geist_Mono,
   Inter,
+  Newsreader,
   Space_Grotesk,
 } from "next/font/google";
 import "./globals.css";
@@ -16,6 +17,15 @@ const mkDisplay = Space_Grotesk({
 const mkSans = Inter({
   variable: "--font-mk-sans",
   subsets: ["latin"],
+});
+/* The editorial serif. Carries h1 and every section h2 on the marketing site
+   and nothing else; Space Grotesk drops to h3 and numerals. Loading it here
+   rather than in the marketing layout keeps a single font pipeline. */
+const mkSerif = Newsreader({
+  variable: "--font-mk-serif",
+  weight: ["400", "500", "600"],
+  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -34,7 +44,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${mkDisplay.variable} ${mkSans.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${mkDisplay.variable} ${mkSans.variable} ${mkSerif.variable} h-full antialiased`}
     >
       {/* suppressHydrationWarning: browser extensions (e.g. unit/currency
           converters) inject attributes onto <body> before React hydrates. */}

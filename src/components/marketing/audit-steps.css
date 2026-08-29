@@ -1,163 +1,321 @@
 /* ----------------------------------------------------------------------------
-   The audit, step by step (namespace: mk-aud-*)
+   The audit, step by step (namespace: mk-audit-*)
 
-   Numbered glass plates strung on a rail, vertical on small screens and
-   horizontal from 60rem up. The last step is the deliverable, so it fills
-   gold. Consumes the tokens declared on .mkt in marketing.css.
+   A spacer-aligned comparison grid, never a table. Five columns: a fixed 168px
+   label rail against four fluid step columns, the only fixed-plus-fluid grid on
+   the page, and the only pinned chrome below the nav.
+
+   Two ideas hold it together:
+
+   1. Spacers, not row tracks. Row 1 is the rail head and four aria-hidden
+      spacers with the same minimum height, so the four step columns start
+      exactly where the rail head ends however far the h2 wraps. Row 2 holds
+      five independent column stacks; every stack opens on the same 96px band
+      and closes on the same hairline, so all five columns end flush.
+   2. Fixed vertical units. The chrome module is 96px (rail head, spacers,
+      sticky band) and one comparison row is 3.5rem, 56px, with the closing
+      cell in every column carrying the extra border pixel at
+      calc(3.5rem + 1px) so the bottom hairline lands on one line.
+
+   Flat by construction: hairlines only. No glass, no shadow, no fill, no green
+   and no red. The sticky band's backdrop blur is the only effect in the
+   section, the flat cell tint is the only hover, and there is no entrance at
+   all.
+
+   Missing copy, stated rather than invented: labelled comparison rows need a
+   field the `audit` copy shape does not have. The row unit below is sized and
+   ready for
+
+     matrix: {
+       includedLabel: string;   // screen-reader word for a filled chip
+       excludedLabel: string;   // screen-reader word for an empty cell
+       rows: { label: string; steps: boolean[] }[];
+     }
+
+   with one boolean per step. Until that exists the grid renders the four steps
+   themselves, because writing row labels here would mean inventing English on a
+   bilingual site.
+
+   Consumes the tokens declared on .mkt in marketing.css.
 ---------------------------------------------------------------------------- */
 
-.mk-aud {
-  --mk-aud-plate: 3.35rem;
-  --mk-aud-gap: clamp(1.5rem, 3vw, 2.5rem);
-  margin-top: var(--mk-space-block);
+.mk-audit {
+  --mk-audit-rail: 168px;
+  --mk-audit-gap: 1.5rem;
+  --mk-audit-head: 6rem; /* rail head, and the four column spacers */
+  --mk-audit-band: 6rem; /* the sticky column headers */
+  --mk-audit-row: 3.5rem; /* one comparison row, 56px */
+
+  /* The nav pill is a floating 52px pill at top: 12px, so its bottom edge is
+     at exactly 64px. Pinning the band at the spec's 64px would tuck it against
+     that edge, under the pill's shadow; 76px gives the band back the 12px of
+     air the pill sits in. */
+  --mk-audit-top: 76px;
+
+  /* Sits directly inside the drafting-frame rails, which carry no padding of
+     their own, so the inset is this section's job. The 3.5rem cap is not
+     arbitrary: Approach sits immediately above with a 2rem cap, and at that
+     value both sections resolved to an identical 1101px content box at
+     1440x900, with no level of the box tree at which a reader could tell them
+     apart. Two adjacent sections must never share a measure. */
+  padding-inline: clamp(1.25rem, 2.6vw, 3.5rem);
+
+  /* The section's own header pins at --mk-audit-top, so a deep link to #audit
+     has to stop short of it. */
+  scroll-margin-top: var(--mk-audit-top);
 }
 
-.mk-aud__list {
+.mk-audit__grid {
+  display: grid;
+  grid-template-columns: var(--mk-audit-rail) repeat(4, 1fr);
+  column-gap: var(--mk-audit-gap);
+}
+
+/* --------------------------------------------------------- the label rail --- */
+
+/* The h2 lives in the rail at 18px instead of at 3rem display size. The rail
+   head is row 1 of column 1 and it sets the height the four spacers match. */
+.mk-audit__h2 {
+  grid-column: 1;
+  min-height: var(--mk-audit-head);
+  margin: 0;
+  padding-bottom: 0.75rem;
+  font-family: var(--mk-serif-face);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.28;
+  letter-spacing: var(--mk-track-18);
+  color: var(--mk-text-hi);
+  text-wrap: pretty;
+}
+
+.mk-audit__spacer {
+  min-height: var(--mk-audit-head);
+}
+
+.mk-audit__rail,
+.mk-audit__col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mk-audit__cols {
+  grid-column: 2 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  column-gap: var(--mk-audit-gap);
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: 0;
 }
 
-.mk-aud__step {
-  position: relative;
-  display: grid;
-  grid-template-columns: var(--mk-aud-plate) minmax(0, 1fr);
-  column-gap: clamp(0.9rem, 3vw, 1.25rem);
-  padding-block-end: clamp(1.6rem, 4vw, 2.1rem);
-  align-content: start;
-}
+/* ------------------------------------------------------- the sticky band --- */
 
-.mk-aud__step:last-child {
-  padding-block-end: 0;
-}
-
-/* The rail. Vertical by default, drawn from under the plate to the next step. */
-.mk-aud__step::before {
-  content: "";
-  position: absolute;
-  inset-inline-start: calc(var(--mk-aud-plate) / 2);
-  top: calc(var(--mk-aud-plate) + 0.4rem);
-  bottom: 0.2rem;
-  width: 1px;
-  background: linear-gradient(180deg, var(--mk-gold-line), var(--mk-line));
-}
-
-.mk-aud__step:last-child::before {
-  display: none;
-}
-
-.mk-aud__marker {
+.mk-audit__band {
+  position: sticky;
+  top: var(--mk-audit-top);
+  z-index: 20;
   display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  height: var(--mk-audit-band);
+  padding-block: 0.9rem;
+
+  /* Half the column gap on each side, so neighbouring segments meet in the
+     middle of every gap and the five of them read as one bar rather than as
+     five tiles with daylight between them. */
+  margin-inline: calc(var(--mk-audit-gap) / -2);
+  padding-inline: calc(var(--mk-audit-gap) / 2);
+
+  background: rgba(10, 13, 20, 0.9);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/* The two outer edges stay flush with the grid: the bar spans the grid, it
+   does not hang off it. */
+.mk-audit__band--rail {
+  margin-inline-start: 0;
+  padding-inline-start: 0;
+}
+
+.mk-audit__col:last-child .mk-audit__band {
+  margin-inline-end: 0;
+  padding-inline-end: 0;
+}
+
+/* The included-marker chip, carrying the step number. 20px round, soft gold,
+   no icon and no coloured circle. The asymmetric inline padding is optical:
+   0.1em of mono tracking hangs a sliver of air off the last glyph, so the left
+   side needs the extra pixel to keep the number centred. */
+.mk-audit__chip {
+  flex: none;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--mk-aud-plate);
-  height: var(--mk-aud-plate);
-  border: 1px solid var(--mk-glass-border);
-  border-radius: var(--mk-radius-sm);
-  background: var(--mk-glass-grad), var(--mk-glass-bg);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  backdrop-filter: blur(20px) saturate(160%);
-  box-shadow: var(--mk-glass-inset), 0 8px 24px rgba(0, 0, 0, 0.35);
-}
-
-.mk-aud__num {
-  font-family: var(--mk-display);
-  font-size: 1.02rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--mk-accent);
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px 0 6px;
+  border-radius: 999px;
+  background: var(--mk-accent-softer);
+  font-family: var(--mk-mono);
+  font-size: var(--mk-label-size);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: var(--mk-label-track);
   font-variant-numeric: tabular-nums;
+  color: rgba(227, 189, 108, 0.8);
 }
 
-.mk-aud__text {
-  padding-top: 0.35rem;
-}
-
-.mk-aud__title {
+.mk-audit__title {
   margin: 0;
   font-family: var(--mk-display);
-  font-size: clamp(1.12rem, 2vw, 1.32rem);
-  font-weight: 650;
-  line-height: 1.22;
-  letter-spacing: var(--mk-track-head);
+  font-size: clamp(0.9rem, 1.15vw, 0.975rem);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: var(--mk-track-18);
   color: var(--mk-text-hi);
   text-wrap: balance;
 }
 
-.mk-aud__body {
-  margin: 0.55rem 0 0;
-  font-size: 0.925rem;
-  line-height: 1.7;
+/* ------------------------------------------------------------- the cells --- */
+
+/* One comparison row is var(--mk-audit-row). A cell holding prose is that tall
+   at minimum and then stretches, and because every column stack stretches to
+   the same height, the closing hairlines still land on one line. */
+.mk-audit__cell {
+  flex: 1;
+  min-height: var(--mk-audit-row);
+  padding-block: 1rem 1.25rem;
+  border-top: 1px solid var(--mk-line);
+}
+
+/* The closing cell absorbs the extra border pixel so all five columns end
+   flush rather than one pixel apart. */
+.mk-audit__cell:last-child {
+  min-height: calc(var(--mk-audit-row) + 1px);
+  border-bottom: 1px solid var(--mk-line);
+}
+
+/* Flat tint, nothing else: no lift, no border colour, no shadow. */
+.mk-audit__col .mk-audit__cell {
+  transition: background-color var(--mk-fast) var(--mk-ease);
+}
+
+.mk-audit__col .mk-audit__cell:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.mk-audit__cell--rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.mk-audit__body {
+  margin: 0;
+  font-size: 0.855rem;
+  line-height: 1.55;
   color: var(--mk-text-mut);
-  max-width: 32rem;
+  overflow-wrap: break-word;
   text-wrap: pretty;
 }
 
-/* The step you walk away from holding something. */
-.mk-aud__step--final .mk-aud__marker {
-  border-color: transparent;
-  background: var(--mk-accent);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25), 0 10px 28px rgba(201, 166, 107, 0.3);
-}
-
-.mk-aud__step--final .mk-aud__num {
-  color: var(--mk-on-accent);
-}
-
-.mk-aud__step--final .mk-aud__title {
-  display: inline-block;
-  padding-block-end: 0.3rem;
-  border-block-end: 2px solid var(--mk-accent);
-}
-
-/* ---------------------------------------------------- horizontal rail --- */
-
-@media (min-width: 60rem) {
-  .mk-aud__list {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    column-gap: var(--mk-aud-gap);
-  }
-
-  .mk-aud__step {
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 1.1rem;
-    padding-block-end: 0;
-  }
-
-  .mk-aud__step::before {
-    inset-inline-start: calc(var(--mk-aud-plate) + 0.6rem);
-    inset-inline-end: calc(0.6rem - var(--mk-aud-gap));
-    top: calc(var(--mk-aud-plate) / 2);
-    bottom: auto;
-    width: auto;
-    height: 1px;
-    background: linear-gradient(90deg, var(--mk-gold-line), var(--mk-line));
-  }
-
-  .mk-aud__text {
-    padding-top: 0;
-  }
-}
-
-@media (min-width: 60rem) {
-  .mk-aud__list:has(.mk-aud__step:nth-child(5)) {
-    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  }
-}
-
-/* ------------------------------------------------------------- takeaway --- */
-
-.mk-aud__note {
-  margin: clamp(1.9rem, 4vw, 2.75rem) 0 0;
-  padding: clamp(0.9rem, 2.5vw, 1.15rem) clamp(1rem, 3vw, 1.5rem);
-  border-inline-start: 2px solid var(--mk-accent);
-  border-radius: 0 var(--mk-radius-sm) var(--mk-radius-sm) 0;
-  background: rgba(255, 255, 255, 0.05);
-  font-size: clamp(0.95rem, 1.4vw, 1.05rem);
-  line-height: 1.62;
-  color: var(--mk-text-body);
-  max-width: 44rem;
+.mk-audit__lede {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--mk-text-mut);
+  overflow-wrap: break-word;
   text-wrap: pretty;
+}
+
+/* Pinned to the closing hairline, where a margin note belongs. */
+.mk-audit__note {
+  margin: auto 0 0;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--mk-text-faint);
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+
+/* -------------------------------------------------------------- collapse --- */
+
+/* Below 900px the rail cannot hold a 168px column of text next to four fluid
+   ones, so the whole thing unstacks: no rail, no spacers, no pinned band. The
+   steps become a plain vertical list on the same hairlines, and the rail's
+   voice (h2, lede, note) simply runs above it. */
+@media (max-width: 900px) {
+  .mk-audit__grid {
+    display: block;
+  }
+
+  .mk-audit__spacer {
+    display: none;
+  }
+
+  .mk-audit__h2 {
+    min-height: 0;
+    padding-bottom: 1rem;
+  }
+
+  .mk-audit__band {
+    position: static;
+    height: auto;
+    margin-inline: 0;
+    padding-block: 1rem 0.75rem;
+    padding-inline: 0;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-top: 1px solid var(--mk-line);
+  }
+
+  .mk-audit__band--rail {
+    display: none;
+  }
+
+  .mk-audit__cols {
+    display: block;
+  }
+
+  .mk-audit__cell {
+    min-height: 0;
+    padding-block: 0 1.25rem;
+    border-top: none;
+  }
+
+  .mk-audit__cell:last-child {
+    min-height: 0;
+    border-bottom: none;
+  }
+
+  /* Only the last step closes the list. */
+  .mk-audit__col:last-child .mk-audit__cell {
+    border-bottom: 1px solid var(--mk-line);
+  }
+
+  .mk-audit__cell--rail {
+    padding-block: 0 1.5rem;
+    gap: 0.75rem;
+  }
+
+  .mk-audit__lede,
+  .mk-audit__note {
+    font-size: 0.875rem;
+  }
+
+  .mk-audit__note {
+    margin-top: 0;
+  }
+}
+
+/* The tint lands instantly; nothing else in the section moves in the first
+   place, so there is nothing else to stop. */
+@media (prefers-reduced-motion: reduce) {
+  .mk-audit__col .mk-audit__cell {
+    transition: none;
+  }
 }

@@ -1,0 +1,264 @@
+/* ----------------------------------------------------------------------------
+   Approach (namespace: mk-approach-*)
+
+   The tallest section on the page, around 1520px, and the only one that pins
+   anything. A 2:3 split: a sticky left rail carrying the heading, a numbered
+   index and the gold pipeline, against a right column of five reading blocks.
+
+   Two rules shape everything below.
+
+   1. Flat. There is no glass, no card, no shadow and no radius on any surface
+      here. The blocks are held apart by exactly one dashed hairline each, the
+      same dashed gold as the frame rails, so the column reads as a ruled sheet
+      rather than as five containers.
+
+   2. Nothing moves except the marker and the pipe. The rail item transitions
+      border-colour and colour at 200ms, the pipe is scrubbed open by
+      scroll-fx.tsx, and the five blocks have no entrance at all. The cascade
+      that used to fade them up one by one is deliberately gone and must not
+      come back in any form.
+
+   Consumes the tokens declared on .mkt in marketing.css.
+
+   Note on the .mkt prefix: two of the class names the spec mandates
+   (.mk-approach and .mk-approach__body) still have legacy rules in
+   marketing.css from the previous version of this section. The prefix outranks
+   them regardless of stylesheet order. It can be dropped once those rules are
+   deleted from marketing.css.
+---------------------------------------------------------------------------- */
+
+.mkt .mk-approach {
+  display: block;
+  margin: 0;
+  /* Sits directly inside the drafting-frame rails, which carry no padding of
+     their own, so the inset is this section's job. */
+  padding-block: clamp(3.25rem, 6.5vw, 5.5rem);
+  padding-inline: clamp(1.5rem, 2.6vw, 2rem);
+}
+
+/* ------------------------------------------------------------- the split --- */
+
+.mk-approach__grid {
+  display: grid;
+  /* 2fr 3fr. minmax(0, …) rather than bare fr so a long unbroken word in the
+     body cannot push the column past its share. */
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 4rem;
+  align-items: start;
+}
+
+/* The only sticky element below the fold. 96px clears the 64px nav with a
+   little air; the observer in approach-section.tsx uses the same number as the
+   top of its reading band, so the marker changes exactly when a block reaches
+   the rail. */
+.mk-approach__rail {
+  position: sticky;
+  top: 96px;
+  height: fit-content;
+}
+
+.mk-approach__lede {
+  margin: 0;
+  max-width: 30rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--mk-text-mut);
+  text-wrap: pretty;
+}
+
+/* ------------------------------------------------------------- the index --- */
+
+.mk-approach__nav {
+  list-style: none;
+  margin: clamp(1.75rem, 3vw, 2.5rem) 0 0;
+  padding: 0;
+}
+
+.mk-approach__nav > li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  /* The marker itself: 2px, transparent until this step is the one being read.
+     No background, no fill, no indicator dot. */
+  border-left: 2px solid transparent;
+  padding: 0.5rem 0 0.5rem 0.9rem;
+  font-family: var(--mk-sans);
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: var(--mk-track-18);
+  color: var(--mk-text-faint);
+  /* 200ms, colour properties only. Per D.1 this section gets no second
+     signature moment, so the marker is the entire motion budget of the rail. */
+  transition:
+    border-color 200ms var(--mk-ease),
+    color 200ms var(--mk-ease);
+}
+
+.mk-approach__nav > li > span {
+  flex: none;
+  font-family: var(--mk-display);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: var(--mk-track-12);
+  color: var(--mk-text-faint);
+  transition: color 200ms var(--mk-ease);
+}
+
+.mk-approach__nav > li[aria-current] {
+  border-left-color: var(--mk-accent);
+  color: var(--mk-text-hi);
+}
+
+.mk-approach__nav > li[aria-current] > span {
+  color: var(--mk-accent);
+}
+
+/* -------------------------------------------------------------- the pipe --- */
+
+.mk-approach__pipe {
+  display: block;
+  width: 100%;
+  max-width: 15rem;
+  height: auto;
+  margin-top: clamp(2rem, 3.5vw, 3rem);
+}
+
+/* Resting state: hidden. pathLength is normalised to 1 in the markup, so a
+   dasharray of 1 is one full-length dash followed by one full-length gap, and
+   an offset of 1 parks the gap over the whole path. scroll-fx.tsx scrubs the
+   offset to 0 with an inline style, which outranks this. */
+.mk-approach__pipe path {
+  fill: none;
+  stroke: var(--mk-accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.75;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+/* -------------------------------------------------------------- the body --- */
+
+.mkt .mk-approach__body {
+  /* Resets the legacy colour and type still set on this class name in
+     marketing.css, so the blocks below inherit from the page instead. */
+  color: inherit;
+  font-size: inherit;
+  margin: 0;
+  min-width: 0;
+}
+
+.mk-approach__block {
+  min-height: 260px;
+  padding-block: 0 clamp(2rem, 3.5vw, 2.75rem);
+}
+
+/* Separated by one dashed hairline and nothing else. The first block has no
+   line above it: the rail's heading is the top edge of the section. */
+.mk-approach__block + .mk-approach__block {
+  border-top: 1px dashed var(--mk-rail);
+  padding-top: clamp(2rem, 3.5vw, 2.75rem);
+}
+
+.mk-approach__block > h3 {
+  margin: 0 0 0.7rem;
+  font-size: clamp(1.15rem, 1.7vw, 1.35rem);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: var(--mk-track-24);
+  color: var(--mk-text-hi);
+  text-wrap: balance;
+}
+
+.mk-approach__block > p {
+  margin: 0;
+  max-width: 38rem;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--mk-text-mut);
+  text-wrap: pretty;
+}
+
+/* ------------------------------------------------------- the deliverables --- */
+
+.mk-approach__out {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 1.35rem 0 0;
+  padding: 0;
+}
+
+.mk-approach__out > li {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: start;
+  gap: 0.7rem;
+  font-size: 0.855rem;
+  line-height: 1.45;
+  color: var(--mk-text-mut);
+}
+
+/* 20px round chip, gold at 8 percent. Never a green tick: the only saturated
+   colour anywhere on this page is the gold, and a status green here would read
+   as a system state rather than as a deliverable. */
+.mk-approach__chip {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--mk-accent-softer);
+}
+
+/* The check, drawn from two borders rather than set as a glyph so it does not
+   depend on which font happens to resolve. 65 percent opacity keeps it a mark
+   rather than an icon. */
+.mk-approach__chip::before {
+  content: "";
+  width: 5px;
+  height: 9px;
+  margin-top: -2px;
+  border: solid var(--mk-accent);
+  border-width: 0 1.5px 1.5px 0;
+  opacity: 0.65;
+  transform: rotate(45deg);
+}
+
+/* ------------------------------------------------------------- narrow --- */
+
+/* Below 900px the rail unsticks and stacks above the body. A pinned index next
+   to a single column of text is chrome taking space the text needs. */
+@media (max-width: 900px) {
+  .mk-approach__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 2.75rem);
+  }
+
+  .mk-approach__rail {
+    position: static;
+    top: auto;
+  }
+
+  .mk-approach__pipe {
+    max-width: 13rem;
+  }
+}
+
+/* The marker lands instantly and the pipe is simply drawn, matching what
+   scroll-fx.tsx does when it declines to build the scrub. */
+@media (prefers-reduced-motion: reduce) {
+  .mk-approach__nav > li,
+  .mk-approach__nav > li > span {
+    transition: none;
+  }
+
+  .mk-approach__pipe path {
+    stroke-dashoffset: 0;
+  }
+}

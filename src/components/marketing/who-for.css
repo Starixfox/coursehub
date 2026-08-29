@@ -1,107 +1,138 @@
 /* ----------------------------------------------------------------------------
-   Who it's for (namespace: mk-who-*)
+   Who it's for (namespace: mk-band-*)
 
-   A register rather than a feature grid: one vertical spine, a gold tick per
-   entry, the audience name set large, the repetitive-work line running
-   quietly beside it. Restyled for the dark gold-on-glass system; consumes the
-   tokens declared on .mkt in marketing.css.
+   The shortest band on the page, roughly 420px, and the only section that is
+   one horizontal strip. It opens on a single 24px sentence sitting on a gold
+   left hairline, then a five-across lattice.
+
+   The rule that shapes everything below: the container paints the dividers,
+   not the children. The grid carries one 1px box, each cell after the first
+   carries one left hairline, and that is the entire treatment. Cells butt
+   directly against each other on single shared lines, so there are no gaps,
+   no doubled borders and no rounded plates. Nothing here is elevated, which
+   is what makes the glass in the other sections read as deliberate.
+
+   Consumes the tokens declared on .mkt in marketing.css.
 ---------------------------------------------------------------------------- */
 
-.mk-who {
-  margin-top: var(--mk-space-block);
+.mk-band {
+  /* Sits directly inside the drafting-frame rails, which carry no padding of
+     their own, so the inset is this section's job. The vertical padding is
+     what holds the band near its 420px target. */
+  padding-block: clamp(2.75rem, 5.5vw, 4.75rem);
+  padding-inline: clamp(1.25rem, 2.6vw, 2rem);
 }
 
-.mk-who__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border-inline-start: 1px solid var(--mk-line-strong);
-}
+/* --------------------------------------------------------- the lead line --- */
 
-.mk-who__row {
-  position: relative;
-  display: grid;
-  gap: 0.4rem;
-  padding: clamp(1.15rem, 3vw, 1.6rem) 0 clamp(1.15rem, 3vw, 1.6rem)
-    clamp(1.15rem, 3vw, 1.9rem);
-  border-block-end: 1px solid var(--mk-line-subtle);
-  transition: background-color var(--mk-base) var(--mk-ease);
-}
-
-.mk-who__row:last-child {
-  border-block-end: 0;
-}
-
-.mk-who__row:hover {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.045), transparent 70%);
-}
-
-/* The tick that crosses the spine, tracking the optical middle of the name. */
-.mk-who__row::before {
-  content: "";
-  position: absolute;
-  inset-inline-start: calc(-1 * clamp(0.5rem, 1.4vw, 0.7rem));
-  top: calc(clamp(1.15rem, 3vw, 1.6rem) + clamp(0.72em, 1.6vw, 0.98em));
-  width: clamp(1.1rem, 2.6vw, 1.5rem);
-  height: 1px;
-  background: rgba(255, 255, 255, 0.28);
-  transform-origin: left;
-  transition:
-    background-color var(--mk-base) var(--mk-ease),
-    transform var(--mk-base) var(--mk-ease);
-}
-
-.mk-who__row:hover::before {
-  background: var(--mk-accent);
-  transform: scaleX(1.35);
-}
-
-.mk-who__name {
-  margin: 0;
-  font-family: var(--mk-display);
-  font-size: clamp(1.22rem, 2.4vw, 1.62rem);
-  font-weight: 650;
-  line-height: 1.2;
-  letter-spacing: var(--mk-track-head);
+.mk-band__lead {
+  margin: 0 0 clamp(1.5rem, 3vw, 2rem);
+  max-width: 42rem;
+  border-left: 1px solid var(--mk-accent);
+  padding-left: 16px;
+  font-family: var(--mk-sans);
+  font-size: clamp(1.25rem, 2.2vw, 1.5rem);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: var(--mk-track-24);
   color: var(--mk-text-hi);
   text-wrap: balance;
 }
 
-.mk-who__note {
+/* Entrance, and the only motion in the section: a wipe from the left, gold
+   hairline included, so the line reads as being drawn rather than faded in.
+   .is-armed is added by the component on mount; without JS the sentence never
+   enters the clipped state at all. */
+.mk-band__lead.is-armed {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 520ms var(--mk-ease);
+}
+
+.mk-band__lead.is-armed.is-in {
+  clip-path: inset(0 0 0 0);
+}
+
+/* ------------------------------------------------------------ the lattice --- */
+
+.mk-band__grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border: 1px solid var(--mk-line);
+  list-style: none;
   margin: 0;
-  max-width: 34rem;
-  font-size: clamp(0.92rem, 1.3vw, 1rem);
-  line-height: 1.62;
+  padding: 0;
+}
+
+.mk-band__grid > li {
+  padding: 22px 18px 26px;
+  transition: background-color 150ms var(--mk-ease);
+}
+
+.mk-band__grid > li:not(:first-child) {
+  border-left: 1px solid var(--mk-line);
+}
+
+/* Flat tint, nothing else: no lift, no border colour, no shadow. */
+.mk-band__grid > li:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+@media (max-width: 900px) {
+  .mk-band__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .mk-band__grid > li:nth-child(odd) {
+    border-left: none;
+  }
+
+  .mk-band__grid > li:nth-child(n + 3) {
+    border-top: 1px solid var(--mk-line);
+  }
+}
+
+/* ------------------------------------------------------------- cell parts --- */
+
+.mk-band__n {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-family: var(--mk-display);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: var(--mk-track-12);
+  color: var(--mk-text-faint);
+}
+
+.mk-band__name {
+  margin: 0 0 0.4rem;
+  font-family: var(--mk-display);
+  font-size: clamp(0.98rem, 1.25vw, 1.0625rem);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: var(--mk-track-18);
+  color: var(--mk-text-hi);
+  text-wrap: balance;
+}
+
+.mk-band__note {
+  margin: 0;
+  font-size: 0.855rem;
+  line-height: 1.55;
   color: var(--mk-text-mut);
   text-wrap: pretty;
 }
 
-@media (min-width: 56rem) {
-  .mk-who__row {
-    grid-template-columns: minmax(0, 17rem) minmax(0, 1fr);
-    align-items: baseline;
-    column-gap: clamp(1.75rem, 4vw, 3.5rem);
-  }
-}
-
-/* The closing aside: an editorial footnote, not another entry. */
-.mk-who__aside {
-  margin: clamp(1.5rem, 3vw, 2rem) 0 0;
-  padding-inline-start: clamp(1.15rem, 3vw, 1.9rem);
-  border-inline-start: 2px solid var(--mk-accent);
-  font-size: clamp(0.98rem, 1.5vw, 1.1rem);
-  line-height: 1.5;
-  color: var(--mk-text-body);
-  max-width: 34rem;
-}
-
+/* The wipe does not run and the cell tint lands instantly; everything stays
+   visible. */
 @media (prefers-reduced-motion: reduce) {
-  .mk-who__row,
-  .mk-who__row::before {
+  .mk-band__lead.is-armed {
+    clip-path: none;
     transition: none;
   }
 
-  .mk-who__row:hover::before {
-    transform: none;
+  .mk-band__grid > li {
+    transition: none;
   }
 }

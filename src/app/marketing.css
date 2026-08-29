@@ -14,7 +14,8 @@
      box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 20px 60px rgba(0,0,0,0.45)
 
    Sections that ship their own co-located CSS (who-for, audit, trust,
-   approach-pipeline, story-scene) consume the tokens declared in .mkt.
+   approach-section, faq-section, cta-orbit, workflow-tabs, roi-calculator)
+   consume the tokens declared in .mkt and define no colours of their own.
 ---------------------------------------------------------------------------- */
 
 .mkt {
@@ -93,6 +94,64 @@
   --mk-ease: cubic-bezier(0.16, 1, 0.3, 1);
   --mk-fast: 160ms;
   --mk-base: 220ms;
+
+  /* ======================================================================
+     REBUILD 2026-08-28. Everything above this line is unchanged and still
+     load-bearing. Everything below is the drafting-sheet layer: the frame,
+     the editorial serif, the tracking ladder, the elevation ladder and the
+     reserved motion slots. See docs/agora-rebuild-spec.md.
+     ====================================================================== */
+
+  /* --- the drafting-sheet frame ------------------------------------------ */
+  --mk-rail: rgba(227, 189, 108, 0.16); /* the two vertical hairlines, dashed dividers */
+  --mk-rail-solid: rgba(255, 255, 255, 0.1); /* "this is a real object" edges */
+  --mk-mark: rgba(227, 189, 108, 0.3); /* crosshair corner marks */
+  --mk-hatch: rgba(255, 255, 255, 0.045);
+  --mk-hatch-size: 10px;
+  --mk-frame-w: 74rem;
+  --mk-frame-gap: 0.5rem;
+  --mk-nav-w: 68rem; /* deliberately inside the rails */
+
+  /* --- the editorial serif ------------------------------------------------
+     ZONE RULE: serif carries h1 and every section h2 and NOTHING else.
+     Space Grotesk drops to h3, h4, numbers and step labels.
+     Inter carries all body, labels and buttons.
+     Geist Mono carries run ids, durations, cron strings and webhook URLs. */
+  --mk-serif-face: var(--font-mk-serif), Georgia, "Times New Roman", serif;
+
+  /* --- optical tracking ladder -------------------------------------------- */
+  --mk-track-60: -0.025em; /* 60px+ display */
+  --mk-track-48: -0.021em; /* 48px  section h2 on the big moments */
+  --mk-track-36: -0.017em; /* 36px  section h2 default */
+  --mk-track-24: -0.012em; /* 24px  card and rail titles */
+  --mk-track-18: -0.009em; /* 18px  lede */
+  --mk-track-12: 0; /* 12px  micro-labels, explicitly reset */
+
+  /* --- elevation ladder (dark, black-tinted) ------------------------------ */
+  --mk-elev-chip: inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+  --mk-elev-panel: inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --mk-elev-top: 0 20px 25px -5px rgba(0, 0, 0, 0.55),
+    0 8px 10px -6px rgba(0, 0, 0, 0.4);
+
+  /* --- radius scale, concentric-aware -------------------------------------
+     A 15px outer with 2.5px padding takes a 10px inner child (15 - 5 = 10).
+     Never nest two equal radii. */
+  --mk-radius-chip: 10px; /* tab chips, toggle thumb */
+  --mk-radius-tile: 12px; /* bento tiles inside the run panel */
+  --mk-radius-panel: 16px; /* ONLY the run panel and the story cards */
+  --mk-radius-btn: 8px; /* every button */
+
+  /* --- motion additions ---------------------------------------------------- */
+  --mk-ease-inout: cubic-bezier(0.45, 0, 0.55, 1); /* the ROI toggle slide only */
+  --mk-slow: 320ms; /* one-shot entrances */
+  --mk-slide: 500ms; /* RESERVED: the ROI billing toggle, nothing else */
+  --mk-stagger: 40ms; /* max sibling stagger anywhere on the page */
+
+  /* --- mono micro-label ---------------------------------------------------- */
+  --mk-label-size: 11px;
+  --mk-label-track: 0.1em;
 
   position: relative;
   background: transparent;
@@ -207,12 +266,387 @@ html:has(.mkt) ::-webkit-scrollbar-track {
   width: min(100% - 2.5rem, 50rem);
 }
 
+/* ------------------------------------------------------------ skip link ---
+   Off-canvas until focused, then a real button at the top left. Not
+   display:none and not opacity:0, both of which take it out of the tab order
+   and defeat the entire point. */
+
+.mk-skip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 200;
+  transform: translateY(-120%);
+  padding: 0.7rem 1.1rem;
+  border-radius: 0 0 var(--mk-radius-btn) 0;
+  background: var(--mk-accent);
+  color: var(--mk-on-accent);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform var(--mk-fast) var(--mk-ease);
+}
+
+.mk-skip:focus-visible {
+  transform: translateY(0);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--mk-accent-ring);
+}
+
+/* ------------------------------------------------------------------- 404 ---
+   Its own page, same materials as the site. No illustration and no joke: the
+   reader has already hit a dead end and wants a way onward. */
+
+.mk-404 {
+  min-height: 100svh;
+  display: flex;
+}
+
+.mk-404__inner {
+  position: relative;
+  z-index: 1;
+  width: min(100% - 2.5rem, 46rem);
+  margin: auto;
+  padding-block: clamp(4rem, 12vh, 8rem);
+}
+
+.mk-404__brand {
+  display: inline-block;
+  margin-bottom: clamp(2.5rem, 8vh, 4.5rem);
+}
+
+.mk-404__code {
+  font-family: var(--mk-mono);
+  font-size: var(--mk-label-size);
+  font-weight: 500;
+  letter-spacing: var(--mk-label-track);
+  font-variant-numeric: tabular-nums;
+  color: var(--mk-accent);
+  margin: 0 0 1rem;
+}
+
+.mk-404__title {
+  margin-bottom: 1.25rem;
+}
+
+.mk-404__lede {
+  max-width: 34rem;
+}
+
+.mk-404__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 2.25rem;
+}
+
+.mk-404__note {
+  font-size: 0.875rem;
+  color: var(--mk-text-faint);
+  margin: 2.25rem 0 0;
+}
+
+.mk-404__note a {
+  color: var(--mk-text-mut);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.mk-404__note a:hover {
+  color: var(--mk-accent);
+}
+
+/* ------------------------------------------------------------------ hero ---
+   No canvas, no object. The shader backdrop carries the atmosphere and the
+   type carries the message. Full bleed and generously tall, because the one
+   thing a hero cannot be is cramped. */
+
+.mk-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: min(88svh, 46rem);
+  padding-block: clamp(7rem, 18vh, 11rem) clamp(4rem, 10vh, 7rem);
+}
+
+.mk-hero__inner {
+  width: min(100% - 2.5rem, var(--mk-frame-w));
+  margin-inline: auto;
+  max-width: 46rem;
+}
+
+.mk-hero__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-top: 2rem;
+}
+
+.mk-hero__note {
+  font-size: 0.875rem;
+  color: var(--mk-text-faint);
+  margin: 1.4rem 0 0;
+  max-width: 34rem;
+}
+
+/* --------------------------------------------------------- the narrative ---
+   The four beats the scroll story used to carry, in plain type. This is the
+   only block on the page set at reading width, and the only one with no
+   illustration, no card and no surface: after a hero it earns attention by
+   being quieter than everything around it, not louder. */
+
+.mk-story {
+  padding-block: clamp(3rem, 8vh, 5rem) clamp(4rem, 10vh, 7rem);
+}
+
+.mk-story__list {
+  width: min(100% - 2.5rem, 46rem);
+  margin-inline: auto;
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: clamp(2rem, 5vh, 3.25rem);
+}
+
+.mk-story__beat {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr);
+  gap: 0.25rem 1rem;
+  align-items: baseline;
+}
+
+.mk-story__n {
+  font-family: var(--mk-mono);
+  font-size: var(--mk-label-size);
+  font-weight: 500;
+  letter-spacing: var(--mk-label-track);
+  font-variant-numeric: tabular-nums;
+  color: var(--mk-accent);
+  padding-top: 0.35rem;
+}
+
+.mk-story__kicker {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 550;
+  color: var(--mk-text-faint);
+  margin-bottom: 0.5rem;
+}
+
+.mk-story__title {
+  font-family: var(--mk-serif-face);
+  font-size: clamp(1.35rem, 2.6vw, 1.75rem);
+  line-height: 1.2;
+  font-weight: 500;
+  letter-spacing: var(--mk-track-24);
+  color: var(--mk-text-hi);
+  text-wrap: pretty;
+  margin: 0 0 0.6rem;
+}
+
+.mk-story__body {
+  color: var(--mk-text-mut);
+  font-size: 1rem;
+  line-height: 1.65;
+  text-wrap: pretty;
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .mk-story__beat {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.35rem;
+  }
+  .mk-story__n {
+    padding-top: 0;
+  }
+}
+
+/* -------------------------------------------------------- workflows field ---
+   The instrument's own space. Full bleed, outside the drafting rails, with a
+   ground lifted just enough off --mk-bg to read as a different room without
+   becoming a coloured band: measured, 3 percent white over the page ground.
+   The reference this borrows from shifts hard between dawn grey, white and
+   saturated orange, which works when the subject is a photographed boat. The
+   subject here is a dark UI panel, and a saturated field behind it would eat
+   the one thing the section exists to show. So the move is kept and the
+   amplitude is not. */
+
+/* No 100vw and no negative margin. This section is already a direct child of
+   <main>, which is full width, so it bleeds by default. The calc(50% - 50vw)
+   trick would actively break it: 100vw counts the scrollbar and clientWidth
+   does not, so on a 1280 viewport with a 10px scrollbar it lands 5px proud on
+   each side and the whole document scrolls sideways. */
+.mk-runs-field {
+  position: relative;
+  padding-block: clamp(4rem, 9vw, 7rem);
+  background:
+    radial-gradient(
+      ellipse 120% 80% at 50% 0%,
+      rgba(255, 255, 255, 0.045) 0%,
+      transparent 62%
+    ),
+    rgba(255, 255, 255, 0.022);
+  border-block: 1px solid var(--mk-line);
+}
+
+/* 5rem of side margin, not 2.5rem. The panel deliberately bleeds past this
+   container by --mk-run-bleed (18px each side) so its edges sit proud of the
+   heading above it. At a 2.5rem gutter that bleed lands 3px outside the
+   viewport at 1280 and the document scrolls sideways. The gutter has to be
+   wider than the bleed it contains. */
+.mk-runs-field__inner {
+  width: min(100% - 5rem, 78rem);
+  margin-inline: auto;
+}
+
+@media (max-width: 640px) {
+  .mk-runs-field__inner {
+    width: min(100% - 3rem, 78rem);
+  }
+}
+
+/* The annotation register. Near-illegible on purpose: it is the label on the
+   side of the equipment, not a nav. Aria-hidden because the same five names
+   are the accessible tablist immediately below it. */
+.mk-runs-field__labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 2.25rem;
+  list-style: none;
+  margin: 0 0 clamp(2rem, 5vw, 3.5rem);
+  padding: 0;
+  font-family: var(--mk-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.mk-runs-field__head {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: 1.5rem 4rem;
+  align-items: end;
+  margin-bottom: clamp(2rem, 4.5vw, 3rem);
+}
+
+@media (max-width: 860px) {
+  .mk-runs-field__head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mk-runs-field__labels {
+    gap: 0.35rem 1.25rem;
+  }
+}
+
+/* ---------------------------------------------------- the drafting frame ---
+   Two hairlines per side, 8px apart, running the full height of the page.
+   Every section is visibly inside a measured frame. The story stage and the
+   footer deliberately escape it (see .mk-frame__escape), and that single
+   escape is what makes the frame read as intentional rather than as a box
+   everything happens to be in. */
+
+.mk-frame {
+  width: min(100% - 2rem, var(--mk-frame-w));
+  margin-inline: auto;
+}
+
+.mk-frame__rail {
+  border-inline: 1px solid var(--mk-rail);
+}
+
+.mk-frame__rail--inner {
+  margin-inline: var(--mk-frame-gap);
+}
+
+/* Full-bleed escape hatch for the two sections that break the frame. */
+.mk-frame__escape {
+  margin-inline: calc(50% - 50vw);
+  width: 100vw;
+  max-width: 100vw;
+}
+
+/* A real element between sections, so separation is decoupled from padding.
+   That is what lets section heights vary wildly without the page feeling
+   arrhythmic. */
+.mk-rule {
+  height: 2.5rem;
+  border-block: 1px dashed var(--mk-rail);
+  background-image: repeating-linear-gradient(
+    315deg,
+    var(--mk-hatch) 0 1px,
+    transparent 0 50%
+  );
+  background-size: var(--mk-hatch-size) var(--mk-hatch-size);
+}
+
+@media (min-width: 768px) {
+  .mk-rule {
+    height: 3rem;
+  }
+}
+
+/* Registration marks at the corners of major grid blocks. The half-pixel
+   offsets are the entire point: they land the cross exactly on the hairline. */
+.mk-mark {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(circle, #000 15%, transparent 100%);
+  mask-image: radial-gradient(circle, #000 15%, transparent 100%);
+  translate: calc(-50% - 0.5px) calc(-50% - 0.5px);
+}
+
+.mk-mark::before,
+.mk-mark::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  background: var(--mk-mark);
+}
+
+.mk-mark::before {
+  height: 1px;
+}
+
+.mk-mark::after {
+  width: 1px;
+}
+
+.mk-mark--tr {
+  translate: calc(50% + 0.5px) calc(-50% - 0.5px);
+}
+
+.mk-mark--bl {
+  translate: calc(-50% - 0.5px) calc(50% + 0.5px);
+}
+
+.mk-mark--br {
+  translate: calc(50% + 0.5px) calc(50% + 0.5px);
+}
+
 .mk-section {
   padding-block: var(--mk-space-section);
 }
 
 .mk-section--flush {
   padding-top: 0;
+}
+
+/* Horizontal padding for sections that sit directly inside the frame rails.
+   The rails supply the vertical hairlines and no inner padding, so content
+   would otherwise touch them. */
+.mk-inset {
+  padding-inline: clamp(1.25rem, 3vw, 2.5rem);
+}
+
+.mk-inset--narrow {
+  width: min(100%, 50rem);
+  margin-inline: auto;
 }
 
 .mk-section-head {
@@ -250,26 +684,88 @@ html:has(.mkt) ::-webkit-scrollbar-track {
   margin-bottom: 1rem;
 }
 
+/* The hero pill: the ONE eyebrow left on the page, and it does not shout.
+   Asymmetric padding because a 12px dot sits inside the left edge. */
+.mk-eyebrow--pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 4px 12px 4px 8px;
+  border: 1px solid var(--mk-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--mk-text-mut);
+}
+
+.mk-eyebrow--pill::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--mk-accent);
+  box-shadow: 0 0 0 3px var(--mk-accent-softer);
+  flex: none;
+}
+
+/* Serif zone: h1 and every section h2, and nothing else. Weight tops out at
+   600 because contrast on this page comes from size and family, never from
+   pushing a face to 700. */
 .mk-h1 {
-  font-family: var(--mk-display);
-  font-size: clamp(2.5rem, 6.2vw, 4.4rem);
-  line-height: 1.05;
-  font-weight: 700;
-  letter-spacing: var(--mk-track-display);
+  font-family: var(--mk-serif-face);
+  font-size: clamp(2.6rem, 6vw, 4.2rem);
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: var(--mk-track-60);
   color: var(--mk-text-hi);
   text-wrap: balance;
   margin: 0 0 1.25rem;
 }
 
 .mk-h2 {
-  font-family: var(--mk-display);
-  font-size: clamp(1.9rem, 4.2vw, 3rem);
-  line-height: 1.08;
-  font-weight: 700;
-  letter-spacing: var(--mk-track-display);
+  font-family: var(--mk-serif-face);
+  font-size: clamp(1.9rem, 4vw, 2.25rem);
+  line-height: 1.11;
+  font-weight: 600;
+  letter-spacing: var(--mk-track-36);
   color: var(--mk-text-hi);
   text-wrap: balance;
   margin: 0 0 1rem;
+}
+
+/* Reserved for the two loud moments only: Why and the final CTA. */
+.mk-h2--moment {
+  font-size: clamp(2.1rem, 4.6vw, 3rem);
+  line-height: 1;
+  letter-spacing: var(--mk-track-48);
+}
+
+/* Space Grotesk drops to the sub-heads and every numeral. */
+.mkt h3,
+.mkt .st-title,
+.mkt .mk-why__title {
+  font-family: var(--mk-display);
+}
+
+.mkt .mk-num,
+.mkt .mk-stat-val {
+  font-family: var(--mk-display);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* The only uppercase register on the site: mono micro-labels inside product
+   chrome. Marketing voice never shouts. */
+.mkt .mk-label {
+  font-family: var(--mk-mono);
+  font-size: var(--mk-label-size);
+  font-weight: 500;
+  letter-spacing: var(--mk-label-track);
+  text-transform: uppercase;
+  color: var(--mk-text-faint);
 }
 
 /* The two-tone device: the emphasised span in a heading turns gold.
@@ -331,19 +827,11 @@ html:has(.mkt) ::-webkit-scrollbar-track {
     box-shadow var(--mk-base) var(--mk-ease);
 }
 
-.mk-btn:active {
-  transform: translateY(0) scale(0.98);
-}
-
 /* Primary: white on dark, the Hub's login CTA. */
 .mk-btn--primary {
   background: #ffffff;
   color: #10131c;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 12px 28px rgba(0, 0, 0, 0.25);
-}
-.mk-btn--primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.22), 0 18px 36px rgba(0, 0, 0, 0.3);
 }
 
 /* Gold: the accent CTA (was --paper on the paper site; markup kept). */
@@ -351,11 +839,6 @@ html:has(.mkt) ::-webkit-scrollbar-track {
   background: var(--mk-accent);
   color: var(--mk-on-accent);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25), 0 12px 28px rgba(201, 166, 107, 0.25);
-}
-.mk-btn--paper:hover {
-  background: var(--mk-accent-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25), 0 18px 36px rgba(201, 166, 107, 0.3);
 }
 
 /* Ghost: glass. */
@@ -366,10 +849,36 @@ html:has(.mkt) ::-webkit-scrollbar-track {
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
-.mk-btn--ghost:hover {
-  background: rgba(255, 255, 255, 0.11);
-  border-color: rgba(255, 255, 255, 0.32);
-  transform: translateY(-1px);
+
+/* Hover lifts are gated behind a real pointer. A touch device fires :hover on
+   tap and holds it until you tap something else, so an ungated lift leaves a
+   tapped button stuck in its raised state, looking selected. */
+@media (hover: hover) and (pointer: fine) {
+  .mk-btn--primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.22), 0 18px 36px rgba(0, 0, 0, 0.3);
+  }
+
+  .mk-btn--paper:hover {
+    background: var(--mk-accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25), 0 18px 36px rgba(201, 166, 107, 0.3);
+  }
+
+  .mk-btn--ghost:hover {
+    background: rgba(255, 255, 255, 0.11);
+    border-color: rgba(255, 255, 255, 0.32);
+    transform: translateY(-1px);
+  }
+}
+
+/* AFTER the hover rules, deliberately. This was previously declared above
+   them, and `.mk-btn--primary:hover` (0,2,0) ties `.mk-btn:active` (0,1,1) on
+   specificity, so source order decided it and hover won. The press state
+   never applied while the pointer was over the button, which is every press
+   on a desktop: the buttons had no press feedback at all. */
+.mk-btn:active {
+  transform: translateY(0) scale(0.97);
 }
 
 .mk-btn--small {
@@ -411,10 +920,11 @@ html:has(.mkt) ::-webkit-scrollbar-track {
 }
 
 .mk-nav__inner {
+  position: relative;
   pointer-events: auto;
   width: auto;
   margin-inline: auto;
-  max-width: calc(100vw - 32px);
+  max-width: min(var(--mk-nav-w), calc(100vw - 32px));
   min-height: 52px;
   display: flex;
   align-items: center;
@@ -431,6 +941,22 @@ html:has(.mkt) ::-webkit-scrollbar-track {
 
 .mk-nav.is-scrolled .mk-nav__inner {
   box-shadow: var(--mk-glass-inset), 0 16px 48px rgba(0, 0, 0, 0.55);
+}
+
+/* Reading progress, tracking the bottom inner edge of the pill. Scrubbed by
+   scroll-fx.ts; scaleX(0) is the resting and reduced-motion state, so if the
+   script never runs the line simply is not there. */
+.mk-nav__progress {
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 7px;
+  height: 1px;
+  border-radius: 999px;
+  background: var(--mk-accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
 }
 
 .mk-nav__brand {
@@ -574,10 +1100,37 @@ html:has(.mkt) ::-webkit-scrollbar-track {
   transform: none;
 }
 
+/* Reduced motion is enforced at the token layer, so every component that reads
+   the tokens is fixed by this one block. Per-component overrides are only
+   needed for the three keyframe animations in the always-on budget: the story
+   machine, the CTA orbit rings and the nav progress hairline. */
 @media (prefers-reduced-motion: reduce) {
+  .mkt {
+    --mk-fast: 0ms;
+    --mk-base: 0ms;
+    --mk-slow: 0ms;
+    --mk-slide: 0ms;
+    --mk-stagger: 0ms;
+    --mk-ease: linear;
+    --mk-ease-inout: linear;
+  }
+
   .rv {
     opacity: 1;
     transform: none;
+    transition: none;
+  }
+
+  /* Ring and chip must stop together. Freezing only the ring would leave every
+     chip counter-spinning backwards against a stationary ring, which is worse
+     than the original motion. cta-orbit.css guards both as well; this is the
+     belt to that file's braces. */
+  .mkt .mk-cta__ring,
+  .mkt .mk-cta__chip {
+    animation: none;
+  }
+
+  .mkt .mk-run {
     transition: none;
   }
 }
@@ -585,437 +1138,119 @@ html:has(.mkt) ::-webkit-scrollbar-track {
 /* -------------------------------------------------------------- who list --- */
 /* (structure in who-for.css; only tokens consumed) */
 
-/* ---------------------------------------------------------------- tabs ----- */
+/* ---------------------------------------------------------------- tabs -----
+   Structure now lives in workflow-tabs.css: five tabs over one fake
+   application window (titlebar, six-step run list, key/value block, bento).
+   The old text-and-bullets panel that used to live here is gone, along with
+   its step chips and legend. Only tokens are consumed now. */
 
-.mk-tabs {
-  display: grid;
-  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
-  gap: 2.5rem 3.5rem;
-  align-items: start;
-}
-
-.mk-tabs__list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 5px;
-  border-radius: var(--mk-radius);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  backdrop-filter: blur(20px) saturate(160%);
-}
-
-.mk-tab {
-  font-family: var(--mk-sans);
-  font-size: 0.9rem;
-  font-weight: 550;
-  text-align: left;
-  color: rgba(255, 255, 255, 0.72);
-  background: transparent;
-  border: 0;
-  border-radius: 10px;
-  padding: 0.7rem 0.9rem;
-  cursor: pointer;
-  transition:
-    background var(--mk-fast) var(--mk-ease),
-    color var(--mk-fast) var(--mk-ease);
-}
-.mk-tab:hover {
-  color: var(--mk-text-hi);
-  background: rgba(255, 255, 255, 0.06);
-}
-.mk-tab[aria-selected="true"] {
-  color: var(--mk-text-hi);
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-}
-
-.mk-tabs__panel {
-  background: var(--mk-glass-grad), var(--mk-glass-bg);
-  border: 1px solid var(--mk-glass-border);
-  border-radius: var(--mk-radius-lg);
-  -webkit-backdrop-filter: var(--mk-glass-blur);
-  backdrop-filter: var(--mk-glass-blur);
-  box-shadow: var(--mk-glass-inset), var(--mk-glass-shadow);
-  padding: 2rem 2.2rem 1.7rem;
-}
-
-.mk-tabs__meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.4rem 1rem;
-  margin-bottom: 1.4rem;
-}
-
-.mk-tabs__title {
-  font-family: var(--mk-display);
-  font-size: 1.35rem;
-  font-weight: 650;
-  letter-spacing: var(--mk-track-head);
-  color: var(--mk-text-hi);
-  margin: 0;
-}
-
-.mk-tabs__subtitle {
-  font-size: 0.9rem;
-  color: var(--mk-text-faint);
-}
-
-.mk-steps {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.55rem;
-  margin-bottom: 1.4rem;
-}
-
-.mk-step-group {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-}
-
-.mk-step-arrow {
-  color: var(--mk-text-faint);
-}
-
-.mk-step {
-  display: inline-block;
-  font-size: 0.8125rem;
-  font-weight: 550;
-  padding: 0.42rem 0.75rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: rgba(255, 255, 255, 0.85);
-}
-.mk-step--start {
-  background: rgba(255, 255, 255, 0.92);
-  border-color: transparent;
-  color: #10131c;
-}
-.mk-step--ai {
-  background: rgba(126, 162, 255, 0.14);
-  border-color: rgba(126, 162, 255, 0.32);
-  color: #b7c8ff;
-}
-.mk-step--human {
-  background: var(--mk-accent-soft);
-  border-color: rgba(227, 189, 108, 0.38);
-  color: var(--mk-accent);
-}
-
-.mk-tabs__outcome {
-  color: var(--mk-text-mut);
-  font-size: 0.95rem;
-  margin: 0 0 1.3rem;
-  max-width: 34rem;
-}
-
-.mk-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1.2rem;
-  font-size: 0.75rem;
-  color: var(--mk-text-faint);
-  padding-top: 1rem;
-  border-top: 1px solid var(--mk-line-subtle);
-}
-.mk-legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-.mk-legend i {
-  width: 9px;
-  height: 9px;
-  border-radius: 3px;
-  display: inline-block;
-}
-
-.mk-tabs__note {
-  font-size: 0.8rem;
-  color: var(--mk-text-faint);
-  margin: 0.9rem 0 0;
-}
-
-@media (max-width: 860px) {
-  .mk-tabs {
-    grid-template-columns: 1fr;
-    gap: 1.2rem;
-  }
-  .mk-tabs__list {
-    flex-direction: row;
-    overflow-x: auto;
-  }
-  .mk-tab {
-    white-space: nowrap;
-  }
-  .mk-tabs__panel {
-    padding: 1.4rem 1.3rem 1.2rem;
-  }
-}
-
-/* -------------------------------------------------------------- approach --- */
-
-.mk-approach {
-  display: grid;
-  gap: 0;
-  margin-top: 1rem;
-}
-
-.mk-approach__row {
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 4fr) minmax(0, 5fr);
-  gap: 1rem 2.5rem;
-  align-items: baseline;
-  padding: 1.5rem 0.25rem;
-  border-top: 1px solid var(--mk-line-subtle);
-  transition: background var(--mk-fast) var(--mk-ease);
-}
-.mk-approach__row:hover {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.mk-approach__num {
-  font-family: var(--mk-display);
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--mk-accent);
-}
-
-.mk-approach__title {
-  font-family: var(--mk-display);
-  font-size: 1.15rem;
-  font-weight: 650;
-  letter-spacing: var(--mk-track-head);
-  color: var(--mk-text-hi);
-  margin: 0;
-}
-
-.mk-approach__body {
-  color: var(--mk-text-mut);
-  font-size: 0.95rem;
-  margin: 0;
-}
-
-@media (max-width: 860px) {
-  .mk-approach__row {
-    grid-template-columns: 1fr;
-    gap: 0.35rem;
-  }
-}
+/* -------------------------------------------------------------- approach ---
+   Structure now lives in approach-section.css: a sticky 2:3 rail with an
+   IntersectionObserver-driven active marker. The old flat three-column row
+   list that used to live here is gone, and with it the five-block
+   delay={i * 0.04} cascade that was the most template-looking motion on the
+   page. Only tokens are consumed from this file now. */
 
 /* ------------------------------------------------------------------- roi --- */
 
-.mk-calc {
-  display: grid;
-  grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
-  gap: 1.5rem;
-  align-items: stretch;
-}
-
-.mk-calc__inputs {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 1.9rem;
-  background: var(--mk-glass-grad), var(--mk-glass-bg);
-  border: 1px solid var(--mk-glass-border);
-  border-radius: var(--mk-radius-lg);
-  -webkit-backdrop-filter: var(--mk-glass-blur);
-  backdrop-filter: var(--mk-glass-blur);
-  box-shadow: var(--mk-glass-inset), var(--mk-glass-shadow);
-  padding: 2.2rem 2.2rem;
-}
-
-.mk-field__head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 1rem;
-  margin-bottom: 0.8rem;
-}
-
-.mk-field__label {
-  font-size: 0.9rem;
-  color: var(--mk-text-mut);
-}
-
-.mk-field__value {
-  font-family: var(--mk-display);
-  font-size: 0.95rem;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-  color: var(--mk-text-hi);
-  white-space: nowrap;
-}
-
-.mk-range {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 100%;
-  height: 4px;
-  border-radius: 999px;
-  background: linear-gradient(
-    to right,
-    var(--mk-accent) var(--fill, 0%),
-    rgba(255, 255, 255, 0.14) var(--fill, 0%)
-  );
-  cursor: pointer;
-}
-.mk-range::-webkit-slider-thumb {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #fff;
-  border: 0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-  transition: transform var(--mk-fast) var(--mk-ease);
-}
-.mk-range::-webkit-slider-thumb:hover {
-  transform: scale(1.12);
-}
-.mk-range::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #fff;
-  border: 0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-}
-
-.mk-calc__result {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 1.5rem;
-  border-radius: var(--mk-radius-lg);
-  background:
-    radial-gradient(
-      ellipse 90% 70% at 80% 0%,
-      rgba(227, 189, 108, 0.16) 0%,
-      transparent 60%
-    ),
-    rgba(12, 16, 26, 0.82);
-  border: 1px solid rgba(227, 189, 108, 0.3);
-  -webkit-backdrop-filter: var(--mk-glass-blur);
-  backdrop-filter: var(--mk-glass-blur);
-  box-shadow: var(--mk-glass-inset), var(--mk-glass-shadow);
-  padding: 2.2rem 2.2rem 1.8rem;
-}
-
-.mk-calc__result-label {
-  font-size: 0.6875rem;
-  font-weight: 650;
-  letter-spacing: var(--mk-track-caps);
-  text-transform: uppercase;
-  color: var(--mk-accent);
-  margin-bottom: 0.9rem;
-}
-
-.mk-calc__figure {
-  font-family: var(--mk-display);
-  font-size: clamp(2.1rem, 3.6vw, 2.9rem);
-  font-weight: 700;
-  letter-spacing: var(--mk-track-display);
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  color: var(--mk-text-hi);
-  margin-bottom: 0.9rem;
-}
-
-.mk-calc__per-year {
-  font-size: 0.5em;
-  font-weight: 550;
-  color: var(--mk-text-faint);
-  letter-spacing: 0;
-}
-
-.mk-calc__sub {
-  color: var(--mk-text-mut);
-  font-size: 0.95rem;
-  margin: 0 0 0.6rem;
-}
-.mk-calc__sub strong {
-  color: var(--mk-text-hi);
-  font-weight: 650;
-}
-
-.mk-calc__caveat {
-  color: var(--mk-text-faint);
-  font-size: 0.85rem;
-  margin: 0 0 1.4rem;
-}
-
-.mk-calc__disclaimer {
-  color: var(--mk-text-faint);
-  font-size: 0.75rem;
-  margin: 0;
-}
-
-@media (max-width: 860px) {
-  .mk-calc {
-    grid-template-columns: 1fr;
-  }
-}
+/* Structure now lives in roi-calculator.css under the mk-roi__* namespace: an
+   asymmetric block with the input cluster pinned top left and a full-bleed
+   area chart behind it. The old two-glass-panel calculator that used to live
+   here is gone, along with its uppercase result label. Only tokens are
+   consumed now. */
 
 /* -------------------------------------------------------------- why grid --- */
 
+/* Why: a flat bento, not six glass cards in a row.
+   The whole section carries no elevation at all, which is what lets the glass
+   on the story cards and the run panel actually mean something. Dividers are
+   painted by the cells as single shared hairlines, never as card borders, so
+   there are no doubled edges and no gaps.
+   Rhythm is deliberately uneven: cells 1 and 4 span two columns, giving rows
+   of 2+1+1 rather than four equal tiles. */
+/* Full bleed, like the workflows field. The page now alternates: framed
+   reading sections inside the rails, cinematic bands outside them. That
+   alternation is the structural move borrowed from the reference site, where
+   every section is established by its own field of light rather than by a
+   container. Two bands is the right number here; a page where every section
+   is a band has no bands. */
+.mk-why-section {
+  position: relative;
+  padding-block: clamp(4rem, 9vw, 7rem);
+  background: rgba(255, 255, 255, 0.022);
+  border-block: 1px solid var(--mk-line);
+}
+
+.mk-why-section > .mk-why {
+  width: min(100% - 5rem, 78rem);
+  margin-inline: auto;
+}
+
+@media (max-width: 640px) {
+  .mk-why-section > .mk-why {
+    width: min(100% - 3rem, 78rem);
+  }
+}
+
 .mk-why {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-block: 1px dashed var(--mk-rail);
 }
 
 .mk-why__cell {
-  grid-column: span 4;
-  background: var(--mk-glass-grad), var(--mk-glass-bg);
-  border: 1px solid var(--mk-glass-border);
-  border-radius: var(--mk-radius-lg);
-  -webkit-backdrop-filter: var(--mk-glass-blur);
-  backdrop-filter: var(--mk-glass-blur);
-  box-shadow: var(--mk-glass-inset), var(--mk-glass-shadow);
-  padding: 1.7rem 1.7rem 1.5rem;
-  transition:
-    transform var(--mk-fast) var(--mk-ease),
-    border-color var(--mk-fast) var(--mk-ease),
-    box-shadow var(--mk-base) var(--mk-ease);
-}
-.mk-why__cell:hover {
-  transform: translateY(-2px);
-  border-color: rgba(227, 189, 108, 0.35);
-  box-shadow: var(--mk-glass-inset), 0 24px 70px rgba(0, 0, 0, 0.55);
+  position: relative;
+  padding: 2rem clamp(1.25rem, 2.4vw, 2rem);
+  border-top: 1px solid var(--mk-line);
+  border-right: 1px solid var(--mk-line);
+  transition: background var(--mk-fast) var(--mk-ease);
 }
 
-/* The statement cell spans wide and reads as the section's thesis. */
+/* Wide cells: the first card of each row. */
+.mk-why__cell:nth-child(2),
+.mk-why__cell:nth-child(5) {
+  grid-column: span 2;
+}
+
+/* Last cell of each row loses its right hairline so the grid ends flush. */
+.mk-why__cell:nth-child(4),
+.mk-why__cell:nth-child(7) {
+  border-right: none;
+}
+
+.mk-why__cell:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* The statement is a full-width row inside the grid rather than a separate
+   head, so the thesis is woven into the feature story instead of quarantined
+   above it. The dot grid behind it is the only texture on the page. */
 .mk-why__cell--statement {
-  grid-column: span 8;
-  display: flex;
-  align-items: flex-end;
-  background:
-    radial-gradient(
-      ellipse 80% 90% at 10% 0%,
-      rgba(227, 189, 108, 0.12) 0%,
-      transparent 55%
-    ),
-    var(--mk-glass-grad),
-    var(--mk-glass-bg);
+  grid-column: 1 / -1;
+  padding: clamp(3rem, 6vw, 5rem) clamp(1.25rem, 2.4vw, 2rem);
+  border-top: none;
+  border-right: none;
+  overflow: hidden;
+}
+
+.mk-why__cell--statement::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: radial-gradient(circle, #e8eaf2 1px, transparent 1px);
+  background-size: 22px 22px;
+  pointer-events: none;
+}
+
+.mk-why__cell--statement:hover {
+  background: transparent;
 }
 
 .mk-why__statement {
-  font-family: var(--mk-display);
-  font-size: clamp(1.4rem, 2.6vw, 2rem);
-  line-height: 1.25;
-  font-weight: 650;
-  letter-spacing: var(--mk-track-head);
-  color: var(--mk-text-mut);
-  text-wrap: balance;
+  position: relative;
+  max-width: 26ch;
+  color: var(--mk-text-hi);
   margin: 0;
 }
 .mk-why__statement em {
@@ -1025,10 +1260,12 @@ html:has(.mkt) ::-webkit-scrollbar-track {
 
 .mk-why__num {
   display: block;
-  font-family: var(--mk-display);
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--mk-accent);
+  font-family: var(--mk-mono);
+  font-size: var(--mk-label-size);
+  font-weight: 500;
+  letter-spacing: var(--mk-label-track);
+  font-variant-numeric: tabular-nums;
+  color: var(--mk-text-faint);
   margin-bottom: 0.85rem;
 }
 
@@ -1048,108 +1285,61 @@ html:has(.mkt) ::-webkit-scrollbar-track {
 }
 
 @media (max-width: 960px) {
-  .mk-why__cell {
-    grid-column: span 6;
+  .mk-why {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .mk-why__cell--statement {
-    grid-column: span 12;
+  .mk-why__cell:nth-child(2),
+  .mk-why__cell:nth-child(5) {
+    grid-column: span 2;
+  }
+  .mk-why__cell:nth-child(4),
+  .mk-why__cell:nth-child(7) {
+    border-right: none;
+  }
+  .mk-why__cell:nth-child(odd) {
+    border-right: none;
   }
 }
 @media (max-width: 640px) {
+  .mk-why {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .mk-why__cell,
   .mk-why__cell--statement {
-    grid-column: span 12;
+    grid-column: 1 / -1;
+    border-right: none;
   }
 }
 
-/* ------------------------------------------------------------------- faq --- */
-
-.mk-faq {
-  display: grid;
-  gap: 0.6rem;
-}
-
-.mk-faq details {
-  background: var(--mk-glass-grad), var(--mk-glass-bg);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: var(--mk-radius);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  backdrop-filter: blur(20px) saturate(160%);
-  overflow: hidden;
-  transition: border-color var(--mk-fast) var(--mk-ease);
-}
-.mk-faq details:hover {
-  border-color: rgba(255, 255, 255, 0.24);
-}
-.mk-faq details[open] {
-  border-color: rgba(227, 189, 108, 0.3);
-}
-
-.mk-faq summary {
-  list-style: none;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.05rem 1.25rem;
-  font-weight: 550;
-  font-size: 0.98rem;
-  color: var(--mk-text-body);
-  cursor: pointer;
-}
-.mk-faq summary::-webkit-details-marker {
-  display: none;
-}
-.mk-faq summary::after {
-  content: "+";
-  font-family: var(--mk-display);
-  font-size: 1.2rem;
-  line-height: 1;
-  color: var(--mk-accent);
-  transition: transform var(--mk-base) var(--mk-ease);
-}
-.mk-faq details[open] summary::after {
-  transform: rotate(45deg);
-}
-
-.mk-faq__answer {
-  padding: 0 1.25rem 1.2rem;
-  color: var(--mk-text-mut);
-  font-size: 0.93rem;
-  max-width: 44rem;
-}
+/* ------------------------------------------------------------------- faq ---
+   Structure now lives in faq-section.css: a docs-style 2:3 split with a sticky
+   category rail and all eight answers rendered open, so the content is
+   scannable and indexable instead of hidden behind eight clicks. The glass
+   accordion that used to live here is gone; only tokens are consumed now. */
 
 /* -------------------------------------------------------------- final CTA --- */
 
+/* Final CTA. No glass here: the depth comes from the orbit rings behind it,
+   which is why this section can carry weight without a hero image, a video or
+   a gradient blob. Content is pinned to the top of the block so the rings read
+   as something continuing below the fold rather than as a decoration centred
+   behind the text. */
 .mk-cta-section {
-  padding-block: var(--mk-space-section);
+  position: relative;
+  overflow: hidden;
+  min-height: 26rem;
+  padding-block: var(--mk-space-section) 0;
+  isolation: isolate;
 }
 
 .mk-cta-section__inner {
   position: relative;
+  z-index: 1;
   text-align: center;
-  background:
-    radial-gradient(
-      ellipse 70% 90% at 50% 0%,
-      rgba(227, 189, 108, 0.14) 0%,
-      transparent 60%
-    ),
-    var(--mk-glass-grad),
-    var(--mk-glass-bg);
-  border: 1px solid rgba(227, 189, 108, 0.28);
-  border-radius: 24px;
-  -webkit-backdrop-filter: var(--mk-glass-blur);
-  backdrop-filter: var(--mk-glass-blur);
-  box-shadow: var(--mk-glass-inset), 0 30px 80px rgba(0, 0, 0, 0.55);
-  padding: clamp(3rem, 7vw, 5.5rem) clamp(1.5rem, 5vw, 4rem);
+  padding: 0 clamp(1.5rem, 5vw, 4rem) clamp(4rem, 9vw, 7rem);
 }
 
 .mk-cta-section__title {
-  font-family: var(--mk-display);
-  font-size: clamp(2rem, 4.6vw, 3.4rem);
-  line-height: 1.06;
-  font-weight: 700;
-  letter-spacing: var(--mk-track-display);
   color: var(--mk-text-hi);
   text-wrap: balance;
   margin: 0 0 1.2rem;
@@ -1187,12 +1377,13 @@ html:has(.mkt) ::-webkit-scrollbar-track {
 
 /* ---------------------------------------------------------------- footer --- */
 
+/* The one hard opaque slab on the page. After eleven thousand pixels of
+   translucent glass floating over a live shader, the footer is terminal
+   punctuation: no blur, no transparency, no shader showing through. */
 .mk-footer {
-  border-top: 1px solid var(--mk-line-subtle);
-  background: rgba(6, 8, 16, 0.6);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  backdrop-filter: blur(20px) saturate(140%);
-  padding-block: 2.6rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: #050810;
+  padding-block: 3.2rem;
 }
 
 .mk-footer__inner {

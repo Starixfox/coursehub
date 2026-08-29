@@ -83,6 +83,12 @@ export function SiteNav({ copy }: { copy: MarketingCopy }) {
             <span />
           </button>
         </div>
+
+        {/* Scroll progress. The only motion in the nav: no hide-on-scroll-down,
+            no shrink-on-scroll. A hairline tracking the bottom inner edge of
+            the pill, scrubbed by the nav-progress ScrollTrigger in scroll-fx.ts
+            and left at scaleX(0) when motion is reduced. */}
+        <span className="mk-nav__progress" aria-hidden="true" />
       </div>
 
       {open ? (

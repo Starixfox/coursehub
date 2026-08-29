@@ -1,0 +1,456 @@
+/* ----------------------------------------------------------------------------
+   ROI calculator (namespaces: mk-roi-*, mk-toggle-*)
+
+   The one deliberately unbalanced block on the page. Everything else is
+   centred, evenly split or full-bleed; this block is pinned top left and left
+   to trail 288px of empty measured space under itself. That empty space is not
+   waste, it is where the chart lives: the control cluster is capped at 32rem
+   of a 74rem frame, so the split reads as roughly forty percent content and
+   sixty percent chart, and the whole thing hangs off the top-left corner.
+
+   Two things earn an exception here and nowhere else on the site:
+
+   1. The chart is the only saturated shape of any size on the page. Gold at
+      0.14 alpha fading to nothing, with a 1.5px accent stroke over it. It is
+      allowed to be that loud because every pixel of it is the visitor's own
+      numbers.
+   2. --mk-slide (500ms) is reserved for the toggle thumb and appears exactly
+      once, below. Nothing else on the site may use it.
+
+   Consumes the tokens declared on .mkt in marketing.css.
+---------------------------------------------------------------------------- */
+
+/* The page wraps this component in `.mk-section.mk-inset`, which would stack
+   clamp(5rem, 10vw, 8.5rem) of block padding and its own inline inset on top
+   of the asymmetry below, and would stop the chart reaching the frame rails.
+   The block owns its own padding, so the wrapper's is zeroed from here rather
+   than by editing marketing-page.tsx. If that wrapper is ever simplified to a
+   bare <section id="roi">, this selector simply stops matching and nothing
+   else changes. */
+.mkt .mk-section:has(> .mk-roi) {
+  padding: 0;
+}
+
+.mk-roi {
+  position: relative;
+  /* Mobile keeps the asymmetry in proportion rather than in absolute pixels:
+     288px of dead space under a 375px-wide column would just be a blank
+     screen. The desktop value below is the real one. */
+  padding: 2.5rem 1.25rem 8rem;
+}
+
+@media (min-width: 900px) {
+  .mk-roi {
+    padding: 3rem 1.5rem 18rem;
+  }
+}
+
+/* ----------------------------------------------------------------- chart --- */
+
+/* Stretched rather than fitted: preserveAspectRatio="none" plus a non-scaling
+   stroke on the line, which is what keeps 1.5px at exactly 1.5px whatever the
+   block's aspect ratio turns out to be.
+
+   Narrow viewports get the chart as a band that exactly fills the void under
+   the stack rather than as a full-block layer. Below 900px the asymmetry
+   collapses (the cluster is the full width), so a full-block chart would run
+   its line straight through the sliders and the fine print. The band keeps the
+   graphic without costing a single character of legibility. */
+.mk-roi__chart {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  width: 100%;
+  height: 8rem;
+  pointer-events: none;
+}
+
+/* Desktop: absolutely fills the block, padding included, so it runs edge to
+   edge between the frame rails and straight down through the 18rem of bottom
+   padding. */
+@media (min-width: 900px) {
+  .mk-roi__chart {
+    top: 0;
+    height: 100%;
+  }
+}
+
+.mk-roi__stop {
+  stop-color: var(--mk-accent);
+}
+
+.mk-roi__stop--top {
+  stop-opacity: 0.14;
+}
+
+.mk-roi__stop--base {
+  stop-opacity: 0;
+}
+
+.mk-roi__line {
+  fill: none;
+  stroke: var(--mk-accent);
+  stroke-width: 1.5px;
+  stroke-linejoin: round;
+}
+
+/* The entrance, and the only one in this section. The path carries
+   pathLength="1", so one dash covers the whole line no matter how the sliders
+   reshape it, and the offset runs 1 to 0 exactly once. .is-armed is added by
+   the component on mount: without scripting the chart is simply drawn. The
+   fill rises with the line rather than sitting there fully formed under a
+   line that is still drawing, which would read as a broken render. */
+.mk-roi__chart.is-armed .mk-roi__line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 900ms var(--mk-ease);
+}
+
+.mk-roi__chart.is-armed .mk-roi__area {
+  opacity: 0;
+  transition: opacity 900ms var(--mk-ease);
+}
+
+.mk-roi__chart.is-armed.is-in .mk-roi__line {
+  stroke-dashoffset: 0;
+}
+
+.mk-roi__chart.is-armed.is-in .mk-roi__area {
+  opacity: 1;
+}
+
+/* ----------------------------------------------------------------- panel --- */
+
+.mk-roi__panel {
+  position: relative;
+  z-index: 1;
+  max-width: 32rem;
+}
+
+/* No eyebrow, no lede pair, no head block. One sentence, demoted to the same
+   24px serif the Trust section uses, so the section opens quietly and the
+   numbers underneath are the loudest thing in the block. */
+.mk-roi__lead {
+  margin: 0 0 clamp(1.5rem, 3vw, 2rem);
+  font-family: var(--mk-serif-face);
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: var(--mk-track-24);
+  color: var(--mk-text-hi);
+  text-wrap: balance;
+}
+
+/* -------------------------------------------------------------- readouts --- */
+
+.mk-roi__readouts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1.75rem 2.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.mk-roi__readout {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.mk-roi__readout-label {
+  font-family: var(--mk-mono);
+  font-size: var(--mk-label-size);
+  font-weight: 500;
+  line-height: 1.2;
+  /* Mono and tracked, but NOT uppercase. These are marketing-facing instrument
+     labels, not run-panel chrome, and the run panel is the only place on the
+     site where uppercase survives. */
+  letter-spacing: var(--mk-label-track);
+  color: var(--mk-text-faint);
+}
+
+/* Instrument readout, not a marketing stat: tabular figures so digits do not
+   jitter while a slider is dragged, line-height 1 so the box is exactly as
+   tall as the number, and a bright left hairline it hangs off. The hairline is
+   deliberately brighter than --mk-line: these are the only elements on the
+   page allowed a 0.40 alpha rule. */
+.mk-roi__figure {
+  display: inline-block;
+  border-left: 1px solid rgba(255, 255, 255, 0.4);
+  padding-left: 14px;
+  font-family: var(--mk-display);
+  font-size: clamp(1.75rem, 4.2vw, 2.5rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: var(--mk-track-display);
+  color: var(--mk-text-hi);
+}
+
+.mk-roi__unit {
+  margin-left: 0.28em;
+  font-size: 0.42em;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--mk-text-faint);
+  white-space: nowrap;
+}
+
+/* --- the zero-shift swap ---------------------------------------------------
+   Anti-slop item 32: toggling the billing period shifts no pixel of
+   surrounding layout. Guaranteed structurally rather than by tuning widths.
+   Both variants are placed in the SAME single grid cell, unit noun included,
+   so the cell is sized to the wider of the two and its width and height are
+   identical in both states. Nothing is added to or removed from flow; only
+   opacity changes, and opacity is not a layout property. */
+.mk-roi__figure--swap {
+  display: inline-grid;
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+}
+
+.mk-roi__swap {
+  grid-column: 1;
+  grid-row: 1;
+  opacity: 0;
+  transition: opacity 200ms var(--mk-ease);
+}
+
+.mk-roi__swap[data-active="true"] {
+  opacity: 1;
+}
+
+/* ---------------------------------------------------------------- toggle --- */
+
+.mk-toggle {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 2px;
+}
+
+/* The thumb's containing block. Without it the thumb would resolve its
+   percentages against .mk-toggle's padding box and swallow the 2px track. */
+.mk-toggle__track {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+
+.mk-toggle__thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: calc((100% - 2px) / 2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: var(--mk-glass-inset);
+  /* --mk-slide is 500ms and is reserved for exactly this declaration.
+     Reduced motion zeroes it at the token layer, so the thumb jumps. */
+  transition: transform var(--mk-slide) var(--mk-ease-inout);
+}
+
+.mk-toggle[data-on="month"] .mk-toggle__thumb {
+  transform: translateX(calc(100% + 2px));
+}
+
+.mk-toggle__opt {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  padding: 5px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--mk-text-faint);
+  cursor: pointer;
+  transition: color var(--mk-fast) var(--mk-ease);
+}
+
+.mk-toggle__opt[data-active="true"] {
+  color: var(--mk-text-hi);
+}
+
+/* Glass chrome hover grammar: a colour step and nothing else. No lift, no
+   scale, no shadow. */
+.mk-toggle__opt:hover {
+  color: var(--mk-text-hi);
+}
+
+/* Real radios, kept in the accessibility tree and in the tab order, with
+   arrow-key selection for free from the shared name. Only the paint is
+   replaced. */
+.mk-toggle__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.mk-toggle__opt:has(.mk-toggle__input:focus-visible) {
+  box-shadow: 0 0 0 2px var(--mk-accent-ring);
+}
+
+/* ----------------------------------------------------- assumption + inputs --- */
+
+.mk-roi__basis {
+  margin: 0 0 clamp(1.75rem, 3.5vw, 2.25rem);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--mk-text-mut);
+  text-wrap: pretty;
+}
+
+.mk-roi__basis strong {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--mk-text-hi);
+}
+
+.mk-roi__inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  margin-bottom: 1.5rem;
+}
+
+.mk-roi__inputs-label {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--mk-text-faint);
+}
+
+.mk-roi__field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.7rem;
+}
+
+.mk-roi__field-label {
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: var(--mk-text-mut);
+}
+
+.mk-roi__field-value {
+  font-family: var(--mk-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--mk-text-hi);
+  white-space: nowrap;
+}
+
+.mk-roi__range {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--mk-accent) var(--fill, 0%),
+    rgba(255, 255, 255, 0.14) var(--fill, 0%)
+  );
+  cursor: pointer;
+}
+
+.mk-roi__range:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--mk-accent-ring);
+}
+
+.mk-roi__range::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  transition: transform var(--mk-fast) var(--mk-ease);
+}
+
+/* Gated: on a touch device the thumb would stay enlarged after a drag ends,
+   because the tap that started the drag leaves :hover latched on it. */
+@media (hover: hover) and (pointer: fine) {
+  .mk-roi__range::-webkit-slider-thumb:hover {
+    transform: scale(1.04);
+  }
+}
+
+.mk-roi__range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* --------------------------------------------------- caveat, cta, footnote --- */
+
+/* Both of these are load-bearing, not filler. The calculator states what the
+   visitor's own inputs imply and nothing more: no benchmark, no average, no
+   measured client result. The caveat says not all of this work is
+   automatable and the disclaimer says this is not a guaranteed saving.
+   Neither may be shortened away. */
+.mk-roi__caveat {
+  margin: 0 0 1.5rem;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--mk-text-faint);
+  text-wrap: pretty;
+}
+
+.mk-roi__cta {
+  margin-bottom: 1.5rem;
+}
+
+.mk-roi__disclaimer {
+  margin: 0;
+  max-width: 30rem;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--mk-text-faint);
+  text-wrap: pretty;
+}
+
+/* ------------------------------------------------------- reduced motion --- */
+
+/* --mk-slide and --mk-fast are already zeroed at the token layer, so the thumb
+   jumps and the slider thumb stops scaling without anything here. These three
+   rules cover the two literal durations in this file: the 900ms draw, which
+   must instead render fully drawn, and the 200ms crossfade. */
+@media (prefers-reduced-motion: reduce) {
+  .mk-roi__chart.is-armed .mk-roi__line {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    transition: none;
+  }
+
+  .mk-roi__chart.is-armed .mk-roi__area {
+    opacity: 1;
+    transition: none;
+  }
+
+  .mk-roi__swap {
+    transition: none;
+  }
+}

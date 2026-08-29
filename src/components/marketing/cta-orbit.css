@@ -1,0 +1,141 @@
+/* ----------------------------------------------------------------------------
+   Final CTA orbit (namespace: mk-cta__*)
+
+   Three concentric rings sunk below the section, behind the CTA copy, with
+   integration chips riding them. The whole assembly is decoration: it is
+   aria-hidden and pointer-events: none, because the gold CTA button sits on
+   top of it and must stay clickable.
+
+   The numbers only work as a set:
+
+     container bottom   = section bottom + 384px   (bottom: -24rem)
+     container height   = 752px                    (the outer ring diameter)
+     -> shared centre   = section bottom + 8px     (752/2 - 384)
+     -> outer ring crest = 368px above the section bottom
+     mask fully clear at 0px, fully solid at 225.6px (30% of 752)
+     -> the crest is invisible, the arc solidifies in the bottom 142px
+
+   Everything is anchored to the container's bottom, so the framing is the
+   same whether the section is at its 26rem minimum or twice that, at 1440
+   wide or at 390. Only the top arc is ever in frame; the section's own
+   overflow: hidden cuts off the rest.
+
+   Consumes the tokens declared on .mkt in marketing.css.
+---------------------------------------------------------------------------- */
+
+.mk-cta__orbit {
+  position: absolute;
+  inset-inline: 0;
+  bottom: -24rem;
+  /* Exactly the outer ring, which is what puts the shared ring centre 8px
+     below the section's bottom edge. Not a rem: the ring diameters are px, and
+     the two must not drift apart if the root font size changes. */
+  height: 752px;
+  z-index: 0;
+  /* Decoration only. The CTA button is above this and stays clickable. */
+  pointer-events: none;
+  /* Nothing in here can affect layout outside itself, and nothing paints
+     outside the box, which keeps a permanently running animation off the rest
+     of the page's paint work. */
+  contain: layout paint;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 30%);
+  mask-image: linear-gradient(to bottom, transparent, #000 30%);
+}
+
+/* ------------------------------------------------------------- the rings --- */
+
+.mk-cta__ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--r);
+  height: var(--r);
+  /* Centred with negative margins rather than a translate, so `transform` is
+     left entirely to the animation. Margins are resolved once at layout time
+     and never touched again. */
+  margin-top: calc(var(--r) / -2);
+  margin-left: calc(var(--r) / -2);
+  border: 1px solid var(--mk-rail);
+  border-radius: 999px;
+  /* Reads as a groove cut into the surface rather than a drawn circle. */
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.35);
+  animation: mk-orbit var(--duration) linear infinite;
+  /* After the shorthand, which resets direction to normal. Adjacent rings run
+     opposite ways: 34s / 26s / 20s, normal / reverse / normal. */
+  animation-direction: var(--spin);
+}
+
+/* ------------------------------------------------------------- the chips --- */
+
+/* A zero-size point at the ring centre, swung out to the chip's position on
+   the ring. 20px inside the radius, so the pill straddles the hairline. */
+.mk-cta__slot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: rotate(var(--a)) translateX(calc(var(--r) / 2 - 20px));
+}
+
+/* The counter-rotation, and the reason the chip needs three transform
+   properties instead of one:
+
+     translate: -50% -50%   centres the pill on the slot's point
+     rotate:    -a          cancels the slot's static placement angle
+     transform: <animated>  cancels the ring's live angle
+
+   They compose in that order (translate, rotate, then transform), all about
+   the same origin, so the animation gets `transform` to itself and the two
+   static corrections never enter a keyframe. The animated half is the same
+   keyframes and the same duration as the parent ring in the inverse
+   direction, so ring + slot + chip sums to a constant 360deg (visually zero)
+   on every frame, at every speed: the pill stays upright while its ring
+   turns. All three are compositor properties; nothing here can force layout.
+
+   Glass, but flat glass: no backdrop-filter. Thirteen permanently moving
+   elements each blurring what is behind them is not a bill this page is
+   willing to pay, and the rings behind them are hairlines anyway. */
+.mk-cta__chip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  translate: -50% -50%;
+  rotate: calc(var(--a) * -1);
+  animation: mk-orbit var(--duration) linear infinite;
+  animation-direction: var(--spin-counter);
+  padding: 5px 10px;
+  border: 1px solid var(--mk-line);
+  border-radius: var(--mk-radius-chip);
+  background: var(--mk-glass-bg);
+  box-shadow: var(--mk-elev-chip);
+  font-family: var(--mk-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: var(--mk-track-12);
+  /* No gold anywhere in here. The section spends its gold on the button. */
+  color: var(--mk-text-mut);
+  white-space: nowrap;
+}
+
+@keyframes mk-orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Static, not hidden. Dropping the animation reverts `transform` to none on
+   both the ring and the chip, and the chip's `translate` and `rotate` are
+   untouched, so every pill keeps its position and stays upright: the same
+   assembly, frozen. Handled here in CSS, never in JS, so it is correct on the
+   first paint and follows the setting live. */
+@media (prefers-reduced-motion: reduce) {
+  .mk-cta__ring,
+  .mk-cta__chip {
+    animation: none;
+  }
+}

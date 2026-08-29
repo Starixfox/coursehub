@@ -1,0 +1,280 @@
+/* ----------------------------------------------------------------------------
+   FAQ (namespace: mk-faq-*)
+
+   A docs split rather than an accordion: a 2fr / 3fr grid with a sticky
+   category rail on the left and every answer open on the right. The section
+   runs on a narrower measure than its neighbours (62rem inside the 74rem
+   frame), which is what makes the 2:3 asymmetry read as a deliberate break
+   in the centred rhythm rather than as a wide two-column band.
+
+   Under 860px the grid becomes plain block flow so the rail can travel the
+   full height of the section as a sticky pill row, and the items behave as
+   the ordinary <details> they always were.
+
+   Nothing in marketing.css matches .mk-faq* any more, so this file is the
+   only source of truth for the section and the selectors stay flat: one class
+   each, with depth added only where a rule genuinely has to out-rank another
+   (the h2 margin, the compact overrides, the [open] chevron, the last item).
+
+   Consumes the tokens declared on .mkt in marketing.css.
+
+   Motion: the rail's colour and border-colour only. No entrance.
+---------------------------------------------------------------------------- */
+
+.mk-faq-section {
+  /* Sits directly inside the drafting-frame rails, which carry no padding of
+     their own, so the inset is this section's job. Held in a custom property
+     because the mobile pill row bleeds back out by exactly this amount. */
+  --mk-faq-pad: clamp(1.5rem, 3vw, 2rem);
+  padding-block: clamp(3.25rem, 6.5vw, 5rem);
+  padding-inline: var(--mk-faq-pad);
+}
+
+.mk-faq {
+  /* The narrower measure. */
+  width: min(100%, 62rem);
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "title answers"
+    "nav   answers";
+  gap: 1.75rem 3rem;
+}
+
+/* Doubled on purpose, and this one stays: it has to beat the 1rem bottom
+   margin on .mk-h2 in marketing.css without depending on stylesheet order. */
+.mk-faq .mk-faq__title {
+  grid-area: title;
+  margin: 0;
+  max-width: 15ch;
+}
+
+/* ---------------------------------------------------------------- the rail --- */
+
+.mk-faq__nav {
+  grid-area: nav;
+  /* The grid area spans the whole remaining row, so the rail travels with the
+     answers; the box itself stays its own height. */
+  position: sticky;
+  top: 96px;
+  height: fit-content;
+  align-self: start;
+}
+
+.mk-faq__nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mk-faq__nav a {
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  padding: 8px 0 8px 16px;
+  color: var(--mk-text-mut);
+  transition:
+    color 200ms var(--mk-ease),
+    border-color 200ms var(--mk-ease);
+}
+
+.mk-faq__nav a:hover {
+  color: var(--mk-text-hi);
+}
+
+.mk-faq__nav a[aria-current="true"] {
+  color: var(--mk-text-hi);
+  border-left-color: var(--mk-accent);
+  font-weight: 500;
+}
+
+.mk-faq__nav-n {
+  flex: none;
+  font-family: var(--mk-display);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: inherit;
+  letter-spacing: var(--mk-track-12);
+  color: var(--mk-text-faint);
+}
+
+/* ------------------------------------------------------------ the answers --- */
+
+.mk-faq__answers {
+  grid-area: answers;
+  min-width: 0;
+}
+
+.mk-faq__group {
+  /* Clears the fixed nav plus the rail's own offset when the rail is used. */
+  scroll-margin-top: 96px;
+}
+
+.mk-faq__group + .mk-faq__group {
+  margin-top: clamp(2rem, 4vw, 2.75rem);
+}
+
+.mk-faq__group-title {
+  margin: 0 0 1.1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--mk-line);
+  font-family: var(--mk-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: var(--mk-track-12);
+  color: var(--mk-text-faint);
+}
+
+/* Flat by construction: no glass, no radius, no lift, and no hover or [open]
+   state at all. The section already carries the page's asymmetry; the items
+   only need a reading rhythm. */
+.mk-faq__item {
+  border-bottom: 1px solid var(--mk-line-subtle);
+  padding-block: 1.1rem;
+}
+
+.mk-faq__item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* The disclosure triangle is dropped at every width: on the wide layout
+   nothing toggles, and the compact layout draws its own chevron below. */
+.mk-faq__q {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  list-style: none;
+  cursor: default;
+}
+
+.mk-faq__q::-webkit-details-marker {
+  display: none;
+}
+
+.mk-faq__q::marker {
+  content: "";
+}
+
+.mk-faq__qt {
+  margin: 0;
+  font-family: var(--mk-display);
+  font-size: clamp(0.98rem, 1.15vw, 1.0625rem);
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: var(--mk-track-18);
+  color: var(--mk-text-hi);
+  text-wrap: balance;
+}
+
+.mk-faq__a {
+  margin: 0.55rem 0 0;
+  max-width: 40rem;
+  font-size: 0.905rem;
+  line-height: 1.62;
+  color: var(--mk-text-mut);
+  text-wrap: pretty;
+}
+
+/* -------------------------------------------------- under 860px: accordion --- */
+
+@media (max-width: 859.98px) {
+  /* Block flow, not grid: a sticky grid item is confined to its own grid area,
+     which would pin the pill row to a one-row band. As a block child of
+     .mk-faq it travels the full height of the section instead. Doubled to
+     out-rank the wide-layout .mk-faq above. */
+  .mk-faq-section .mk-faq {
+    display: block;
+  }
+
+  .mk-faq .mk-faq__title {
+    max-width: 20ch;
+    margin-bottom: 1.25rem;
+  }
+
+  .mk-faq__nav {
+    position: sticky;
+    top: 64px;
+    z-index: 2;
+    height: auto;
+    /* Bleeds to the section edges by exactly the section's own inset. */
+    margin-inline: calc(var(--mk-faq-pad) * -1);
+    margin-bottom: 1.5rem;
+    padding: 0.55rem var(--mk-faq-pad);
+    background: rgba(10, 13, 20, 0.72);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    backdrop-filter: blur(12px) saturate(160%);
+    border-block: 1px solid var(--mk-line-subtle);
+  }
+
+  .mk-faq__nav-list {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .mk-faq__nav-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mk-faq__nav a {
+    /* The shorthand replaces the rail's 2px left border outright. */
+    border: 1px solid var(--mk-line);
+    border-radius: 999px;
+    padding: 6px 13px;
+    white-space: nowrap;
+    transition:
+      color 200ms var(--mk-ease),
+      border-color 200ms var(--mk-ease),
+      background-color 200ms var(--mk-ease);
+  }
+
+  .mk-faq__nav a[aria-current="true"] {
+    border-color: var(--mk-accent-ring);
+    background: var(--mk-accent-softer);
+  }
+
+  .mk-faq__group {
+    scroll-margin-top: 120px;
+  }
+
+  /* The items become the disclosures they always were. These three keep the
+     extra class: a media query adds no specificity, so each has to out-rank
+     its wide-layout counterpart on its own. */
+  .mk-faq__answers .mk-faq__q {
+    cursor: pointer;
+    justify-content: space-between;
+  }
+
+  .mk-faq__answers .mk-faq__q::after {
+    content: "";
+    flex: none;
+    width: 8px;
+    height: 8px;
+    margin-top: 0.4rem;
+    border-right: 1.5px solid var(--mk-accent);
+    border-bottom: 1.5px solid var(--mk-accent);
+    rotate: 45deg;
+    transition: rotate var(--mk-base) var(--mk-ease);
+  }
+
+  .mk-faq__answers .mk-faq__item[open] .mk-faq__q::after {
+    rotate: -135deg;
+  }
+}
+
+/* ------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-faq__nav a,
+  .mk-faq__q::after {
+    transition: none;
+  }
+}

@@ -1,0 +1,785 @@
+/* ----------------------------------------------------------------------------
+   Workflows: the run panel (namespaces: mk-runs__*, mk-run__*, mk-fld*)
+
+   One large fake application window showing a workflow actually running, with
+   a five-setting selector bar welded to its top edge. Five runs exist at once;
+   one is visible. Everything premium on this page happens inside this single
+   frame, which is why nothing else in the section is elevated, tinted or
+   animated.
+
+   Four rules shape the whole file.
+
+   0. The selector bar and the panel are one object, not two. Same border
+      alpha, same glass, same bleed, square where they meet, and only one
+      hairline at the seam: the bar has no bottom border, the panel keeps its
+      top one. Anything that would separate them visually, a gap, a hover lift,
+      a second highlight, a different blur, is a bug in this file.
+
+   1. Border alpha decays by depth. The shell is the only 0.15 edge; the
+      titlebar divider and the tile fills sit at 0.10; the paper-stack decoys
+      fade to 0.04 and 0.028. Depth is read from edge contrast, not shadow.
+
+   2. No nested glass. The shell is the only backdrop-filter on the page after
+      the story cards. Everything inside it is a flat white-alpha surface.
+      A glass surface never contains another glass surface.
+
+   3. Field types look different. A duration is not a step name, a connected
+      tool is not a webhook URL. The .mk-fld* block at the bottom of this file
+      is what stops the panel reading as decorative placeholder text.
+
+   Radius ladder, deliberate and audited: 16px (--mk-radius-panel) split across
+   the two halves of the one object, the bar taking the top pair and the panel
+   the bottom pair and nowhere else here; 12px (--mk-radius-tile) on bento
+   tiles; 8px (--mk-radius-btn) on step rows and their decoys; then the two
+   spec-fixed micro radii, 6px on the code pill and 5px on the tool swatch,
+   plus 2px on the titlebar dot and 999px on the step tick. The tabs
+   deliberately have no radius of their own: they are clipped by the bar. The
+   largest radius is the rarest.
+
+   Several values here are deliberately not round: gap 7px, 176fr 176fr 218fr,
+   margin-left 9.5px, height 13px, calc(3.5rem + 1px). They are hand-nudged and
+   load-bearing. Do not tidy them into 8s and 16s.
+
+   Consumes the tokens declared on .mkt in marketing.css.
+---------------------------------------------------------------------------- */
+
+.mk-runs {
+  /* How far the panel deck escapes the section inset. Always smaller than
+     .mk-inset's padding (clamp(1.25rem, 3vw, 2.5rem)) at every viewport, so
+     the panel widens past the head without ever touching the frame rails and
+     without ever producing a horizontal scrollbar. This is the section
+     breaking its own column. */
+  --mk-run-bleed: clamp(0rem, 1.4vw, 1.15rem);
+}
+
+/* ----------------------------------------------------- the selector bar --- */
+
+/* The top edge of the instrument, not a row of tabs sitting above a
+   screenshot. Same border alpha, same glass, same bleed as the deck below it,
+   and no bottom border: the panel's own top border is the single hairline seam
+   where the two halves meet. Square at that seam, 16px at the outer corners,
+   so the pair reads as one machined object with five settings.
+
+   overflow: hidden is what rounds the tab fills into the two outer corners.
+   Doing it with :first-child / :last-child radii instead would break the
+   moment the bar wraps, because the last tab is then in the middle of the
+   object rather than at its top-right. The cost is that the global 3px outer
+   focus ring would be clipped, so the tabs declare their own inset ring
+   below: the indicator has to survive, the technique does not.
+
+   flex-wrap is load-bearing, not defensive. Five labelled tabs do not fit on
+   one row on a phone, and truncating the names would remove the one thing the
+   bar exists for, so the bar is allowed a second row and every name stays
+   readable. Tabs never shrink (flex-shrink 0) for the same reason: they wrap
+   instead of eliding. */
+.mk-runs__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  margin-inline: calc(var(--mk-run-bleed) * -1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 0;
+  border-radius: var(--mk-radius-panel) var(--mk-radius-panel) 0 0;
+  background: var(--mk-glass-grad), rgba(255, 255, 255, 0.055);
+  -webkit-backdrop-filter: var(--mk-glass-blur);
+  backdrop-filter: var(--mk-glass-blur);
+  /* The one light-catching edge on the fused object, now at its actual top.
+     It used to live on the panel; there it would draw a second highlight
+     across the seam. */
+  box-shadow: var(--mk-glass-inset);
+  overflow: hidden;
+}
+
+/* Instrument chrome: no chip, no ring, no fill at rest. A tab is a glyph, a
+   name, and when it is the active setting, a rule under it. */
+.mk-runs__tab {
+  flex: 1 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  height: 40px;
+  padding-inline: 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--mk-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: var(--mk-track-12);
+  white-space: nowrap;
+  color: var(--mk-text-faint);
+  cursor: pointer;
+  transition:
+    color var(--mk-fast) var(--mk-ease),
+    background-color var(--mk-fast) var(--mk-ease);
+}
+
+/* The page's focus grammar is a 3px ring outside the control. Inside a clipped
+   bar that ring would be cut off, so these five controls, and only these five,
+   turn it inwards: same gold, same weight, fully visible, and it does not
+   disturb the selected rule below, which is a pseudo-element rather than a
+   box-shadow precisely so the two can coexist.
+
+   Selected through the parent on purpose: the rule it has to beat is
+   `.mkt button:focus-visible`, so it needs a third class rather than a second
+   class and an element, and it must win on specificity rather than on
+   stylesheet order. */
+.mk-runs__tabs .mk-runs__tab:focus-visible {
+  outline: none;
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 2px var(--mk-accent-ring);
+}
+
+/* Stroked in currentColor so one colour rule lights the glyph and the name
+   together. The opacity step is what keeps an unselected glyph quieter than
+   its own label instead of competing with it. */
+.mk-runs__glyph {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.6;
+  transition: opacity var(--mk-fast) var(--mk-ease);
+}
+
+.mk-runs__tab:hover {
+  color: var(--mk-text-hi);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.mk-runs__tab:hover .mk-runs__glyph {
+  opacity: 0.9;
+}
+
+/* The active setting, lit in the section accent. The rule is a pseudo-element
+   rather than an inset box-shadow because the global focus-visible style
+   replaces box-shadow outright, and a tab must not lose its selected mark the
+   moment it is reached by keyboard. */
+.mk-runs__tab[aria-selected="true"] {
+  color: var(--mk-text-hi);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.mk-runs__tab[aria-selected="true"] .mk-runs__glyph {
+  color: var(--mk-accent);
+  opacity: 1;
+}
+
+.mk-runs__tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--mk-accent);
+}
+
+/* -------------------------------------------------------------- the deck --- */
+
+/* The rotating queue lives here. The head panel is position: relative and in
+   flow, so the deck takes its height; every other panel is absolutely parked
+   on top of the same origin. */
+.mk-runs__deck {
+  position: relative;
+  margin-inline: calc(var(--mk-run-bleed) * -1);
+}
+
+/* ------------------------------------------------------------- the shell --- */
+
+.mk-run {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+
+  /* Dealt onto a stack, not slid sideways. */
+  transform-origin: center top;
+
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  /* Square at the top. The selector bar above supplies those two corners, and
+     the panel's own top border is the seam between the two halves. */
+  border-radius: 0 0 var(--mk-radius-panel) var(--mk-radius-panel);
+  background: var(--mk-glass-grad), rgba(255, 255, 255, 0.055);
+  -webkit-backdrop-filter: var(--mk-glass-blur);
+  backdrop-filter: var(--mk-glass-blur);
+  /* No --mk-glass-inset here any more: that top highlight belongs to the top
+     of the object, which is now the selector bar. */
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.4),
+    0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+
+  /* Exit is opacity only, 160ms. Visibility flips after the fade has finished
+     so the outgoing panel keeps painting while it leaves and then stops being
+     hit-testable and stops being announced. */
+  transition:
+    opacity var(--mk-fast) var(--mk-ease),
+    visibility 0s linear var(--mk-fast);
+}
+
+.mk-run[data-head="true"] {
+  position: relative;
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+
+  /* Enter: opacity over 200ms, transform over 320ms. Two names rather than one
+     because the two durations are genuinely different. Neither fills, so once
+     the deal has finished the hover transform below owns the element again. */
+  animation:
+    mk-run-fade 200ms var(--mk-ease),
+    mk-run-deal var(--mk-slow) var(--mk-ease);
+
+  transition:
+    opacity var(--mk-fast) var(--mk-ease),
+    visibility 0s;
+}
+
+/* No hover tier. The panel used to lift 2px and take a gold edge as a content
+   card; welded to the selector bar it is chrome, and chrome does not rise when
+   you point at it. A lift here would also tear the seam open by two pixels. */
+
+@keyframes mk-run-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes mk-run-deal {
+  from {
+    transform: translateY(-6px) scale(0.985);
+  }
+}
+
+/* ---------------------------------------------------------- the titlebar --- */
+
+.mk-run__bar {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 44px;
+  padding-inline: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* A diamond, not a dot. Rotating a 2px-rounded square is what separates this
+   from every macOS traffic-light pastiche. */
+.mk-run__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  rotate: 45deg;
+  background: var(--mk-ok);
+}
+
+.mk-run__name {
+  font-family: var(--mk-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: var(--mk-track-12);
+  color: var(--mk-text-hi);
+}
+
+.mk-run__sep {
+  color: var(--mk-text-faint);
+}
+
+.mk-run__meta {
+  font-family: var(--mk-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--mk-text-faint);
+}
+
+/* The example badge. The window is a designed illustration, not a client
+   system, and the frame has to say so at rest: no hover, no tooltip, no
+   scroll. It sits at the far end of the titlebar in the 11px mono uppercase
+   label register, which is otherwise reserved here for the gold human step.
+   Two of that register inside one frame is the deliberate exception, and the
+   badge stays neutral white-alpha so it never competes with the gold.
+
+   flex: none plus margin-inline-start: auto: the badge is pinned to the trailing
+   edge and is the one thing in this bar that must never shrink or be pushed
+   out. The name and meta give way first (see the 520px block). */
+.mk-run__badge {
+  flex: none;
+  margin-inline-start: auto;
+  padding: 2px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  font-family: var(--mk-mono);
+  font-size: var(--mk-label-size);
+  font-weight: 500;
+  letter-spacing: var(--mk-label-track);
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--mk-text-faint);
+}
+
+/* --------------------------------------------------------------- the body --- */
+
+/* 360px, not the original 300px. Every step row now carries a sentence
+   explaining what it does, and at 300px those sentences broke to three lines
+   each and turned the list into a wall. 360px lands most of them on two. */
+.mk-run__body {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  column-gap: calc(3.5rem + 1px); /* lands the right column on a hairline */
+  row-gap: 22px;
+  padding: 22px 24px 26px;
+}
+
+/* --------------------------------------------------------- the step list --- */
+
+.mk-run__steps {
+  position: relative;
+  grid-row: 1 / -1;
+  align-self: start;
+  /* Room for the two decoys to peek out under the last row. */
+  padding-bottom: 8px;
+}
+
+.mk-run__list {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The separator is a timeline connector, not a divider: a 13px vertical tick
+   hanging off the left gutter between two rows. */
+.mk-run__step + .mk-run__step::before {
+  content: "";
+  display: block;
+  margin-left: 9.5px;
+  width: 1px;
+  height: 13px;
+  border-radius: 999px;
+  background: var(--mk-line);
+}
+
+/* Two rows now, not one. The position number hangs in its own gutter, the name
+   and the duration share the line beside it, and the explanation runs
+   underneath, indented to the name so the numbers stay a readable column down
+   the left edge of the list. */
+.mk-run__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "index name     duration"
+    ".     detail   detail";
+  align-items: baseline;
+  column-gap: 10px;
+  row-gap: 5px;
+  padding: 9px 11px 10px;
+  border-radius: var(--mk-radius-btn);
+  /* Every row reserves the rule so the marked one does not shift the column. */
+  border-left: 2px solid transparent;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* AI steps carry the periwinkle the rest of the page already uses for machine
+   work, kept faint so it never competes with the gold. */
+.mk-run__row[data-kind="ai"] {
+  border-left-color: rgba(126, 162, 255, 0.28);
+}
+
+/* The one human step in every run. Gold rule plus the label in 11px uppercase
+   mono. Together with the position numbers and the example badge this is the
+   only uppercase in the component, and the only uppercase on the site. */
+.mk-run__row[data-kind="human"] {
+  border-left-color: var(--mk-accent);
+}
+
+/* 01 through 06. Same 11px mono register as the human label and the badge,
+   tabular so the column does not jitter, and never louder than the step name
+   it numbers. */
+.mk-run__step-index {
+  grid-area: index;
+  font-family: var(--mk-mono);
+  font-size: var(--mk-label-size);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--mk-label-track);
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.mk-run__step-name {
+  grid-area: name;
+  font-family: var(--mk-sans);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--mk-text-body);
+}
+
+.mk-run__row[data-kind="human"] .mk-run__step-name {
+  font-family: var(--mk-mono);
+  font-size: var(--mk-label-size);
+  font-weight: 500;
+  letter-spacing: var(--mk-label-track);
+  text-transform: uppercase;
+  color: var(--mk-accent);
+}
+
+/* The duration keeps its own column on the step header line. nowrap because
+   the auto track will otherwise shrink under pressure on a narrow panel and
+   break "4m 12s" across two lines; the name column absorbs that instead. */
+.mk-run__row > .mk-fld--dur {
+  grid-area: duration;
+  white-space: nowrap;
+}
+
+/* The sentence that makes the panel legible to someone who has never seen an
+   automation. One step down from the step name in size and one step down in
+   colour, so the list still scans as names first and reads as prose second. */
+.mk-run__step-detail {
+  grid-area: detail;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--mk-text-mut);
+  text-wrap: pretty;
+}
+
+/* ------------------------------------------------------- the three states --- */
+/* Completed, current and pending, derived in the component from one number on
+   the run (WorkflowRun.currentStep) so the list can never disagree with itself
+   or with the "Current step" tile in the bento. The distinction is fill and
+   text weight only: colour is already spoken for by data-kind, where
+   periwinkle means machine and gold means you. */
+
+/* Current: the brightest fill in the list plus a hairline ring, and the name,
+   the number and the sentence each step up one rung of the text ladder. The
+   non-visual equivalent is aria-current="step" on the list item. */
+.mk-run__row[data-state="current"] {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
+.mk-run__row[data-state="current"] .mk-run__step-index {
+  color: var(--mk-text-mut);
+}
+
+.mk-run__row[data-state="current"] .mk-run__step-name {
+  color: var(--mk-text-hi);
+}
+
+.mk-run__row[data-state="current"] .mk-run__step-detail {
+  color: var(--mk-text-body);
+}
+
+/* Pending: work the run has not reached. Renders whenever a run's currentStep
+   is not its last row. Flatter fill, quieter text, and the kind rule dimmed
+   with it so an unreached human step does not shout in gold. */
+.mk-run__row[data-state="pending"] {
+  background: rgba(255, 255, 255, 0.035);
+  border-left-color: transparent;
+}
+
+.mk-run__row[data-state="pending"] .mk-run__step-name {
+  color: var(--mk-text-faint);
+}
+
+.mk-run__row[data-state="pending"] .mk-run__step-detail {
+  color: var(--mk-text-faint);
+}
+
+.mk-run__row[data-state="pending"] .mk-run__step-index {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* The paper stack: two decoys behind the real row so the list reads as
+   continuing beneath the fold instead of stopping. Both are inert scenery. */
+.mk-run__stack {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  bottom: 8px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.mk-run__stack i {
+  position: absolute;
+  height: 34px;
+  border-radius: var(--mk-radius-btn);
+}
+
+.mk-run__stack i:first-child {
+  inset: auto 20px -4px 20px;
+  background: rgba(255, 255, 255, 0.028);
+}
+
+.mk-run__stack i:last-child {
+  inset: auto 12px -2px 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* ----------------------------------------------------- the key/value block --- */
+
+.mk-run__kv {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  align-items: center;
+  margin: 0;
+}
+
+.mk-run__kv > dt,
+.mk-run__kv > dd {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 32px;
+  margin: 0;
+}
+
+.mk-run__kv > dt {
+  font-family: var(--mk-mono);
+  font-size: var(--mk-label-size);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--mk-text-faint);
+}
+
+.mk-run__kv > dt:not(:first-of-type),
+.mk-run__kv > dd:not(:first-of-type) {
+  border-top: 1px solid var(--mk-line-subtle);
+}
+
+/* -------------------------------------------------------------- the bento --- */
+
+.mk-run__bento {
+  display: grid;
+  /* Hand-tuned column ratio, not thirds: the summary needs two narrow columns
+     and the single tile beside it needs to be visibly wider than either. */
+  grid-template-columns: 176fr 176fr 218fr;
+  /* 120px is the design floor, and both rows may grow past it. The first has
+     to, because the Dutch summary runs longer than the English one and
+     clipping copy to hold a number is the wrong trade. Both do, because the
+     step list on the left is now the taller column and 1fr rows let the bento
+     reach the bottom of the panel with it instead of stranding whitespace
+     under the last tile. */
+  grid-template-rows: minmax(120px, 1fr) minmax(120px, 1fr);
+  gap: 7px;
+}
+
+.mk-run__tile {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  padding: 13px 14px;
+  border-radius: var(--mk-radius-tile);
+  /* Flat, not glass. The shell above is the only glass in this component. */
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Exactly one tinted surface in the whole panel. No badge, no border colour
+   change, no icon: the tint alone marks the AI summary. */
+.mk-run__tile--ai {
+  grid-column: span 2;
+  background:
+    linear-gradient(
+      55deg,
+      rgba(126, 162, 255, 0.1) 0%,
+      rgba(126, 162, 255, 0.03) 35%,
+      transparent 70%
+    ),
+    rgba(255, 255, 255, 0.1);
+}
+
+.mk-run__tile-label {
+  font-family: var(--mk-mono);
+  font-size: var(--mk-label-size);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--mk-text-faint);
+}
+
+.mk-run__tile-body {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--mk-text-mut);
+  text-wrap: pretty;
+}
+
+.mk-run__tile-value {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------- field types --- */
+/* The point of the whole component: four data types, four visibly different
+   renderings. Nothing here is shared styling with a "just make it grey" fallback. */
+
+.mk-fld--text {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--mk-text-body);
+  text-wrap: pretty;
+}
+
+/* Numbers are numbers: mono, faint, and column-aligned. */
+.mk-fld--dur {
+  font-family: var(--mk-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--mk-text-faint);
+}
+
+/* A connected tool is an object in someone else's system, so it gets an app
+   swatch and an underlined name, the way a linked account reads in real UI. */
+.mk-fld--tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--mk-text-body);
+}
+
+.mk-fld__swatch {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  background: rgba(52, 217, 123, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(52, 217, 123, 0.28);
+}
+
+.mk-fld__tool-name {
+  min-width: 0;
+  border-bottom: 1px solid var(--mk-line);
+}
+
+/* A webhook path or a cron string is machine input, so it gets a bordered mono
+   pill in the AI periwinkle. Never plain text. */
+.mk-fld--code {
+  font-family: var(--mk-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  padding: 1px 6px;
+  border: 1px solid rgba(126, 162, 255, 0.35);
+  border-radius: 6px;
+  color: var(--mk-ai);
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------ responsive --- */
+
+@media (max-width: 1080px) {
+  .mk-run__body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    column-gap: 0;
+  }
+
+  .mk-run__steps {
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .mk-run__bento {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-auto-rows: minmax(112px, auto);
+  }
+}
+
+@media (max-width: 520px) {
+  /* The bar has wrapped to two rows well before this width. Tighten it so the
+     two rows cost less vertical space above the panel, and so the longest
+     names still sit comfortably inside their tab. */
+  .mk-runs__tab {
+    height: 36px;
+    gap: 7px;
+    padding-inline: 10px;
+    font-size: 11.5px;
+  }
+
+  .mk-run__body {
+    padding: 18px 16px 22px;
+  }
+
+  /* The bar carries four things now and the badge is not allowed to be the one
+     that falls off, so below 520px the row is permitted a second line instead
+     of a fixed 44px. The auto margin is dropped with it: once the badge wraps,
+     pushing it to the trailing edge of its own line just strands it. */
+  .mk-run__bar {
+    height: auto;
+    min-height: 44px;
+    flex-wrap: wrap;
+    padding-block: 9px;
+    padding-inline: 14px;
+    row-gap: 7px;
+  }
+
+  /* The interpunct only separates name from meta while they share a line. Once
+     the bar wraps it strands itself at the end of row one, so it goes. */
+  .mk-run__sep {
+    display: none;
+  }
+
+  .mk-run__badge {
+    margin-inline-start: 0;
+  }
+
+  .mk-run__kv {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mk-run__kv > dt {
+    min-height: 0;
+    padding-top: 9px;
+  }
+
+  .mk-run__kv > dd {
+    min-height: 0;
+    padding-bottom: 9px;
+  }
+
+  .mk-run__kv > dd:not(:first-of-type) {
+    border-top: 0;
+  }
+
+  .mk-run__bento {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mk-run__tile--ai {
+    grid-column: span 1;
+  }
+}
+
+/* Reduced motion. The tokens already flatten every duration to 0ms, but the
+   two keyframe animations have to be named explicitly, and this block is
+   declared in the component so it wins regardless of stylesheet order. */
+@media (prefers-reduced-motion: reduce) {
+  .mk-run,
+  .mk-run[data-head="true"] {
+    animation: none;
+    transition: none;
+  }
+
+  .mk-runs__tab,
+  .mk-runs__glyph {
+    transition: none;
+  }
+}

@@ -95,6 +95,20 @@ export function MarketingPage({ copy }: { copy: MarketingCopy }) {
             </div>
             <p className="mk-hero__note">{copy.hero.note}</p>
           </div>
+
+          {/* The stat bar, pinned to the foot of the hero. Three facts about
+              how the work is done, never about results: there are no client
+              results to quote. The first entry is the strongest and it is a
+              boast about an absence, which is the only kind of number this
+              company can honestly make large. */}
+          <dl className="mk-hero__stats">
+            {copy.hero.stats.map((s) => (
+              <div className="mk-hero__stat" key={s.label}>
+                <dt className="mk-hero__stat-label">{s.label}</dt>
+                <dd className="mk-hero__stat-value">{s.value}</dd>
+              </div>
+            ))}
+          </dl>
         </section>
 
         {/* ------------------------------------------------- the narrative ---

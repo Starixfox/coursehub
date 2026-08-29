@@ -94,6 +94,12 @@ export type MarketingCopy = {
     ctaPrimary: string;
     ctaSecondary: string;
     note: string;
+    /** The hero stat bar. Exactly three, and every one of them has to be a
+     *  fact about how the work is done, never a result. There are no client
+     *  results to quote and inventing one would be the single worst thing on
+     *  this site. "0 tools replaced" is the strongest entry precisely because
+     *  it is a boast about an absence. */
+    stats: { value: string; label: string }[];
     flowName: string;
     flowStatus: string;
     flowAria: string;
@@ -274,6 +280,11 @@ export const EN: MarketingCopy = {
     ctaPrimary: "Book a free intro call",
     ctaSecondary: "See how it works",
     note: "Bring us one workflow. Thirty minutes, and an honest answer about what is worth automating.",
+    stats: [
+      { value: "0", label: "Tools replaced" },
+      { value: "1", label: "Step stays yours" },
+      { value: "30", label: "Minutes, free" },
+    ],
     flowName: "workflow / lead-intake",
     flowStatus: "running",
     flowAria: "Example workflow: a trigger passes through three AI agents to an action",
@@ -1072,6 +1083,11 @@ export const NL: MarketingCopy = {
     ctaPrimary: "Plan een gratis kennismaking",
     ctaSecondary: "Bekijk hoe het werkt",
     note: "Breng ons één workflow. Dertig minuten, en een eerlijk antwoord over wat de moeite loont.",
+    stats: [
+      { value: "0", label: "Tools vervangen" },
+      { value: "1", label: "Stap blijft van jou" },
+      { value: "30", label: "Minuten, gratis" },
+    ],
     flowName: "workflow / lead-intake",
     flowStatus: "actief",
     flowAria: "Voorbeeldworkflow: een trigger loopt via drie AI-agents naar een actie",

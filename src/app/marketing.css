@@ -496,13 +496,13 @@ html:has(.mkt) ::-webkit-scrollbar-track {
 
 .mk-story__title {
   font-family: var(--mk-serif-face);
-  font-size: clamp(1.35rem, 2.6vw, 1.75rem);
-  line-height: 1.2;
+  font-size: clamp(1.75rem, 3.4vw, 2.4rem);
+  line-height: 1.12;
   font-weight: 500;
-  letter-spacing: var(--mk-track-24);
+  letter-spacing: -0.018em;
   color: var(--mk-text-hi);
   text-wrap: pretty;
-  margin: 0 0 0.6rem;
+  margin: 0 0 0.75rem;
 }
 
 .mk-story__body {
@@ -775,33 +775,41 @@ html:has(.mkt) ::-webkit-scrollbar-track {
 /* Serif zone: h1 and every section h2, and nothing else. Weight tops out at
    600 because contrast on this page comes from size and family, never from
    pushing a face to 700. */
+/* The display scale.
+   It used to run h1 67px, h2 48px, body 16px at 1280, a ratio of 1.40 between
+   the two headings and 4.2 between the headline and the body. Everything was
+   mid-sized, so the page read as one flat texture with nothing dramatic and
+   nothing quiet. Contrast IS the design on the sites this is measured
+   against: enormous display type against tiny mono labels. The body stays
+   exactly where it was; only the display sizes move, which is what opens the
+   ratio to roughly 6:1. */
 .mk-h1 {
   font-family: var(--mk-serif-face);
-  font-size: clamp(2.6rem, 6vw, 4.2rem);
-  line-height: 1;
+  font-size: clamp(3.25rem, 8.5vw, 6rem);
+  line-height: 0.98;
   font-weight: 600;
-  letter-spacing: var(--mk-track-60);
+  letter-spacing: -0.032em;
+  color: var(--mk-text-hi);
+  text-wrap: balance;
+  margin: 0 0 1.5rem;
+}
+
+.mk-h2 {
+  font-family: var(--mk-serif-face);
+  font-size: clamp(2.5rem, 5.5vw, 3.75rem);
+  line-height: 1.02;
+  font-weight: 600;
+  letter-spacing: -0.026em;
   color: var(--mk-text-hi);
   text-wrap: balance;
   margin: 0 0 1.25rem;
 }
 
-.mk-h2 {
-  font-family: var(--mk-serif-face);
-  font-size: clamp(1.9rem, 4vw, 2.25rem);
-  line-height: 1.11;
-  font-weight: 600;
-  letter-spacing: var(--mk-track-36);
-  color: var(--mk-text-hi);
-  text-wrap: balance;
-  margin: 0 0 1rem;
-}
-
 /* Reserved for the two loud moments only: Why and the final CTA. */
 .mk-h2--moment {
-  font-size: clamp(2.1rem, 4.6vw, 3rem);
-  line-height: 1;
-  letter-spacing: var(--mk-track-48);
+  font-size: clamp(3rem, 7vw, 5rem);
+  line-height: 0.96;
+  letter-spacing: -0.034em;
 }
 
 /* Space Grotesk drops to the sub-heads and every numeral. */
